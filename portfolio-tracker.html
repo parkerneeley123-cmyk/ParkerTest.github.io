@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f5;--surface:#ffffff;--surface2:#f1f1ef;
+  --border:#e5e5e3;--muted:#d0cfcd;
+  --text-dim:#9b9b97;--text:#37352f;--text-hi:#1a1a17;
+  --amber:#d97706;--amber-dim:#fef3c7;
+  --green:#16a34a;--green-dim:#dcfce7;
+  --red:#dc2626;--red-dim:#fee2e2;
+  --blue:#2563eb;--blue-dim:#dbeafe;
+  --purple:#7c3aed;--purple-dim:#ede9fe;
+  --teal:#0d9488;--teal-dim:#ccfbf1;
+  --font-ui:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:14px;min-height:100vh}
+
+/* HEADER */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface)}
+.app-logo{font-family:var(--font-mono);font-size:13px;font-weight:500;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase}
+.header-actions{display:flex;gap:8px;align-items:center}
+
+/* BUTTONS */
+.btn{padding:6px 14px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:var(--font-ui);font-size:13px;cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap}
+.btn:hover{background:var(--border)}
+.btn-primary{background:var(--amber);color:#ffffff;border-color:var(--amber);font-weight:600}
+.btn-primary:hover{background:#b45309;border-color:#b45309}
+.btn-sm{padding:3px 10px;font-size:11px}
+.btn-danger{color:var(--red);border-color:var(--red-dim)}
+.btn-danger:hover{background:var(--red-dim)}
+
+/* HEALTH BAR */
+.health-bar-wrap{padding:16px 28px 0}
+.health-bar-label{display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px;font-family:var(--font-mono);letter-spacing:.06em;color:var(--text-dim);text-transform:uppercase}
+.health-bar{height:7px;border-radius:4px;overflow:hidden;display:flex;gap:2px;background:var(--border)}
+.hb-seg{height:100%;border-radius:2px;transition:width .4s ease}
+.hb-occupied{background:var(--green)}.hb-vacant{background:var(--amber)}.hb-maint{background:var(--red)}
+.health-legend{display:flex;gap:18px;margin-top:7px;font-size:11px;font-family:var(--font-mono);color:var(--text-dim)}
+.hl-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+
+/* NAV TABS */
+.nav-tabs{display:flex;padding:14px 28px 0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.tab-btn{padding:7px 15px 9px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-ui);font-size:13px;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);font-weight:500}
+
+/* MAIN */
+.main{padding:22px 28px}
+.view{display:none}.view.active{display:block}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.stat-label{font-size:11px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px}
+.stat-value{font-size:20px;font-weight:600;color:var(--text-hi);font-family:var(--font-mono)}
+.stat-sub{font-size:11px;color:var(--text-dim);margin-top:3px}
+.stat-value.green{color:var(--green)}.stat-value.amber{color:var(--amber)}.stat-value.red{color:var(--red)}.stat-value.blue{color:var(--blue)}.stat-value.purple{color:var(--purple)}
+
+/* SECTION TITLE */
+.section-title{font-size:11px;font-family:var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--surface);padding:9px 13px;text-align:left;font-size:11px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface)}
+tbody td{padding:10px 13px;font-size:13px;color:var(--text);white-space:nowrap}
+tbody td.mono{font-family:var(--font-mono);font-size:12px}
+tfoot td{padding:9px 13px;font-family:var(--font-mono);font-size:12px;border-top:2px solid var(--border);color:var(--text-hi);font-weight:600;background:var(--surface2)}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-family:var(--font-mono);font-weight:500;letter-spacing:.04em}
+.badge-occupied{background:var(--green-dim);color:var(--green)}
+.badge-vacant{background:var(--amber-dim);color:var(--amber)}
+.badge-maintenance{background:var(--red-dim);color:var(--red)}
+.badge-dscr-ok{background:var(--green-dim);color:var(--green)}
+.badge-dscr-warn{background:var(--amber-dim);color:var(--amber)}
+.badge-dscr-fail{background:var(--red-dim);color:var(--red)}
+
+/* DSCR FLAGS PANEL */
+.flags-panel{background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:14px 18px;margin-bottom:20px}
+.flags-panel-title{font-size:11px;font-family:var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.flag-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(240,82,82,.2);gap:12px;cursor:pointer}
+.flag-row:last-child{border-bottom:none}
+.flag-row:hover .flag-addr{color:var(--text-hi)}
+.flag-addr{font-size:13px;color:var(--text)}
+.flag-detail{font-size:12px;font-family:var(--font-mono);color:var(--red)}
+
+/* PROPERTY PAGE */
+.prop-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.prop-title{font-size:19px;font-weight:600;color:var(--text-hi)}
+.prop-subtitle{font-size:12px;color:var(--text-dim);margin-top:3px;font-family:var(--font-mono)}
+
+/* PROPERTY SUB-TABS */
+.prop-subtabs{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border)}
+.subtab-btn{padding:6px 14px 8px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-size:12px;font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:color .15s,border-color .15s;margin-bottom:-1px;white-space:nowrap}
+.subtab-btn:hover{color:var(--text)}
+.subtab-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
+.subview{display:none}.subview.active{display:block}
+
+/* DETAIL CARDS */
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-bottom:16px}
+.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.detail-card-title{font-size:11px;font-family:var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.field-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;gap:12px;min-height:26px}
+.field-row.subtotal{border-top:1px solid var(--border);margin-top:5px;padding-top:8px}
+.field-row.total{border-top:2px solid var(--border);margin-top:5px;padding-top:8px}
+.field-label{font-size:12px;color:var(--text-dim);flex-shrink:0}
+.field-label.bold{color:var(--text);font-weight:500}
+.field-value{font-size:13px;color:var(--text);text-align:right;font-family:var(--font-mono)}
+.field-value.hi{color:var(--text-hi);font-weight:500}
+.field-value.green{color:var(--green)}.field-value.amber{color:var(--amber)}.field-value.red{color:var(--red)}.field-value.blue{color:var(--blue)}.field-value.purple{color:var(--purple)}
+.field-value.big{font-size:17px;font-weight:600}
+
+/* EXPENSE LINE ITEMS */
+.expense-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.expense-row:last-child{border-bottom:none}
+.expense-name{font-size:13px;color:var(--text)}
+.expense-amt{font-family:var(--font-mono);font-size:12px;color:var(--text);text-align:right;min-width:80px}
+.expense-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
+.expense-del:hover{color:var(--red)}
+.expense-category{font-size:10px;font-family:var(--font-mono);color:var(--text-dim);letter-spacing:.04em}
+
+/* YEAR TABLE */
+.year-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px}
+.year-table{width:100%;border-collapse:collapse;min-width:700px}
+.year-table th{background:var(--surface2);padding:9px 12px;text-align:right;font-size:11px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);white-space:nowrap}
+.year-table th:first-child{text-align:left}
+.year-table td{padding:8px 12px;font-family:var(--font-mono);font-size:12px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+.year-table td:first-child{text-align:left;color:var(--text-dim)}
+.year-table tr:last-child td{border-bottom:none}
+.year-table tr:hover td{background:var(--surface)}
+.year-table .row-total td{background:var(--surface2);font-weight:600;color:var(--text-hi);border-top:2px solid var(--border)}
+
+/* PROFORMA */
+.proforma-table{width:100%;border-collapse:collapse}
+.proforma-table td{padding:7px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+.proforma-table td:last-child{text-align:right;font-family:var(--font-mono);font-size:12px}
+.proforma-table .pf-section td{background:var(--surface2);font-size:11px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);padding:8px 12px}
+.proforma-table .pf-subtotal td{font-weight:600;background:var(--surface);border-top:2px solid var(--border)}
+.proforma-table .pf-total td{font-weight:700;background:var(--surface2);border-top:2px solid var(--amber);color:var(--text-hi);font-size:14px}
+.proforma-table .pf-total td:last-child{color:var(--green);font-size:14px}
+
+/* NOTES */
+.notes-area{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:11px 13px;color:var(--text);font-family:var(--font-ui);font-size:13px;resize:vertical;min-height:80px;margin-top:8px;transition:border-color .15s}
+.notes-area:focus{outline:none;border-color:var(--amber)}
+
+/* EDIT FIELDS */
+input.inline-edit,select.inline-edit{background:var(--surface2);border:1px solid var(--muted);border-radius:4px;padding:3px 7px;color:var(--text-hi);font-family:var(--font-mono);font-size:12px;outline:none;text-align:right;width:120px}
+input.inline-edit:focus,select.inline-edit:focus{border-color:var(--amber)}
+select.inline-edit{text-align:left;width:auto}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px;width:min(580px,94vw);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:600;color:var(--text-hi);margin-bottom:18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:11px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
+.form-input,.form-select{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text-hi);font-family:var(--font-mono);font-size:13px;outline:none;transition:border-color .15s;width:100%}
+.form-input:focus,.form-select:focus{border-color:var(--amber)}
+.form-select{appearance:none;cursor:pointer}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--font-mono);font-size:12px;padding:9px 16px;border-radius:6px;z-index:300;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+
+
+/* ALERT PANELS */
+.alert-panel{border-radius:8px;padding:12px 15px;margin-bottom:14px}
+.alert-panel.red{background:var(--red-dim);border:1px solid var(--red)}
+.alert-panel.amber{background:var(--amber-dim);border:1px solid var(--amber)}
+.alert-panel.green{background:var(--green-dim);border:1px solid var(--green)}
+.alert-panel-title{font-size:11px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px;display:flex;justify-content:space-between}
+.alert-panel.red .alert-panel-title{color:var(--red)}
+.alert-panel.amber .alert-panel-title{color:var(--amber)}
+.alert-panel.green .alert-panel-title{color:var(--green)}
+.alert-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.06);gap:12px;cursor:pointer}
+.alert-row:last-child{border-bottom:none}
+.badge-alert{background:var(--red-dim);color:var(--red)}
+.badge-soon{background:var(--amber-dim);color:var(--amber)}
+/* ACTIVITY */
+.activity-entry{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-entry:last-child{border-bottom:none}
+.activity-meta{flex-shrink:0;width:85px}
+.activity-date{font-size:11px;font-family:var(--font-mono);color:var(--text-dim)}
+.activity-type{font-size:10px;font-family:var(--font-mono);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+.activity-type.call{color:var(--blue)}.activity-type.note{color:var(--purple)}.activity-type.action{color:var(--amber)}.activity-type.alert{color:var(--red)}
+.activity-body{font-size:13px;color:var(--text);flex:1;line-height:1.5}
+.activity-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;align-self:start;padding:0 3px}
+.activity-del:hover{color:var(--red)}
+/* CONTACTS */
+.contact-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);gap:12px}
+.contact-row:last-child{border-bottom:none}
+.contact-name{font-size:13px;font-weight:500;color:var(--text-hi)}
+.contact-role{font-size:10px;font-family:var(--font-mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
+.contact-info{font-size:12px;color:var(--text-dim);margin-top:2px}
+/* ACQUISITION */
+.acq-result{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:15px;margin-top:14px}
+/* TEAL BUTTON */
+.btn-teal{background:var(--teal,#0d9488);color:#fff;border-color:var(--teal,#0d9488);font-weight:600}
+.btn-teal:hover{background:#0f766e}
+
+
+/* RENT ROLL */
+.rentroll-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.rentroll-header{background:var(--surface2);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+/* SNAPSHOT */
+.snapshot-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+.snapshot-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.snapshot-date{font-size:13px;font-weight:600;color:var(--text-hi)}
+.snapshot-meta{font-size:11px;font-family:var(--font-mono);color:var(--text-dim);margin-top:2px}
+.snapshot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.snapshot-stat{background:var(--surface2);border-radius:6px;padding:9px 11px}
+.snapshot-stat-label{font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:3px}
+.snapshot-stat-val{font-size:15px;font-weight:600;font-family:var(--font-mono);color:var(--text-hi)}
+/* GOALS */
+.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+.goal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.goal-label{font-size:14px;font-weight:500;color:var(--text-hi)}
+.goal-progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0}
+.goal-progress-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s ease}
+.goal-meta{font-size:11px;font-family:var(--font-mono);color:var(--text-dim)}
+/* VACANCY COST */
+.vacancy-tag{display:inline-block;background:var(--red-dim);color:var(--red);font-size:10px;font-family:var(--font-mono);padding:1px 6px;border-radius:3px;margin-left:6px}
+/* REFI */
+.refi-comparison{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.refi-col{background:var(--surface2);border-radius:8px;padding:12px 14px}
+.refi-col-title{font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:8px}
+
+@media(max-width:600px){
+  .app-header{padding:10px 14px}.main{padding:14px}.health-bar-wrap{padding:12px 14px 0}.nav-tabs{padding:10px 14px 0}
+  .stat-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="app-logo">Portfolio<span style="color:var(--amber)">OS</span></div>
+    <div style="width:1px;height:18px;background:var(--border)"></div>
+    <select id="clientSelect" class="form-select" style="width:180px;padding:5px 10px;font-size:13px;border-radius:5px" onchange="switchClient(this.value)"></select>
+    <button class="btn btn-sm" onclick="openClientModal()">⚙ Clients</button>
+    <button class="btn btn-sm" onclick="openAcqModal()">🔍 Analyzer</button>
+    <button class="btn btn-sm" onclick="openReportModal()">📄 Report</button>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="exportData()" title="Export current client data">⬇ Export</button>
+    <label class="btn" style="cursor:pointer" title="Import a backup">⬆ Import<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Property</button>
+  </div>
+</header>
+
+<div class="health-bar-wrap">
+  <div class="health-bar-label"><span>Portfolio Status</span><span id="hb-summary">—</span></div>
+  <div class="health-bar">
+    <div class="hb-seg hb-occupied" id="hb-occ" style="width:0%"></div>
+    <div class="hb-seg hb-vacant"   id="hb-vac" style="width:0%"></div>
+    <div class="hb-seg hb-maint"    id="hb-mnt" style="width:0%"></div>
+  </div>
+  <div class="health-legend">
+    <span><span class="hl-dot" style="background:var(--green)"></span>Occupied</span>
+    <span><span class="hl-dot" style="background:var(--amber)"></span>Vacant</span>
+    <span><span class="hl-dot" style="background:var(--red)"></span>Maintenance</span>
+  </div>
+</div>
+
+<nav class="nav-tabs" id="tabNav">
+  <button class="tab-btn active" data-tab="portfolio" onclick="switchMainTab('portfolio',this)">Dashboard</button>
+  <button class="tab-btn" data-tab="activity" onclick="switchMainTab('activity',this)">Activity Log</button>
+  <button class="tab-btn" data-tab="rentroll" onclick="switchMainTab('rentroll',this)">Rent Roll</button>
+  <button class="tab-btn" data-tab="snapshots" onclick="switchMainTab('snapshots',this)">Snapshots</button>
+  <button class="tab-btn" data-tab="goals" onclick="switchMainTab('goals',this)">Goals</button>
+</nav>
+
+<div class="main" id="mainContent">
+  <!-- PORTFOLIO DASHBOARD -->
+  <div class="view active" id="view-portfolio">
+    <div class="stat-grid" id="statGrid"></div>
+    <div id="alertsPanel"></div>
+    <!-- VALUE / DEBT SUMMARY -->
+    <div class="detail-grid" id="portfolioValueGrid" style="margin-bottom:24px"></div>
+    <!-- AVERAGES SUMMARY -->
+    <div id="portfolioAvgPanel" style="margin-bottom:24px"></div>
+    <div class="section-title">All Properties</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Address</th><th>Type</th><th>Status</th><th>Tenant</th>
+            <th>Rent/mo</th><th>Expenses/mo</th><th>NOI/mo</th>
+            <th>DSCR</th><th>Purchase</th><th>Est. Value</th><th>Appreciation</th><th>Debt Balance</th><th>Equity</th>
+          </tr>
+        </thead>
+        <tbody id="propertyTableBody"></tbody>
+        <tfoot id="propertyTableFoot"></tfoot>
+      </table>
+    </div>
+    <div style="color:var(--text-dim);font-size:11px;font-family:var(--font-mono);margin-top:8px;text-align:right" id="emptyMsg"></div>
+  </div>
+
+  <!-- ACTIVITY LOG VIEW -->
+  <div class="view" id="view-activity">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div><div style="font-size:16px;font-weight:600;color:var(--text-hi)" id="activityClientName">Activity Log</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Notes, calls, and action items for this client</div></div><button class="btn btn-primary" onclick="openActivityModal()">+ Add Entry</button></div>
+    <div id="activityList"></div>
+  </div>
+
+  <!-- RENT ROLL VIEW -->
+  <div class="view" id="view-rentroll">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:16px;font-weight:600;color:var(--text-hi)">Rent Roll</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Standard rent roll — share with lenders and CPAs</div></div>
+      <button class="btn" onclick="printRentRoll()">🖨 Print / PDF</button>
+    </div>
+    <div id="rentRollContent"></div>
+  </div>
+
+  <!-- SNAPSHOTS VIEW -->
+  <div class="view" id="view-snapshots">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:16px;font-weight:600;color:var(--text-hi)">Monthly Snapshots</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Freeze portfolio numbers each month to track trends over time</div></div>
+      <button class="btn btn-primary" onclick="takeSnapshot()">📸 Take Snapshot</button>
+    </div>
+    <div id="snapshotList"></div>
+  </div>
+
+  <!-- GOALS VIEW -->
+  <div class="view" id="view-goals">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:16px;font-weight:600;color:var(--text-hi)">Client Goals</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Portfolio targets and strategic milestones</div></div>
+      <button class="btn btn-primary" onclick="openGoalModal()">+ Add Goal</button>
+    </div>
+    <div id="goalList"></div>
+    <div style="margin-top:20px">
+      <div class="section-title">Strategic Notes & Recommendations</div>
+      <div class="detail-card">
+        <div class="detail-card-title">Consultant Notes</div>
+        <textarea class="notes-area" id="clientStrategyNotes" onblur="saveStrategyNotes()" style="min-height:160px" placeholder="Long-term strategy, refinance triggers, acquisition targets, recommendations for this client…"></textarea>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:4px;font-family:var(--font-mono)">Auto-saves on blur</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ADD PROPERTY MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title">Add Property</div>
+    <div class="form-grid">
+      <div class="form-group full"><label class="form-label">Address</label><input class="form-input" id="f-address" placeholder="123 Oak St, Wilmington NC 28401"></div>
+      <div class="form-group"><label class="form-label">Property Type</label>
+        <select class="form-select" id="f-type"><option>SFR</option><option>Duplex</option><option>Triplex</option><option>Quad</option><option>Condo</option><option>Commercial</option></select></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="f-status"><option value="occupied">Occupied</option><option value="vacant">Vacant</option><option value="maintenance">Maintenance</option></select></div>
+      <div class="form-group"><label class="form-label">Tenant Name</label><input class="form-input" id="f-tenant" placeholder="Jane Smith"></div>
+      <div class="form-group"><label class="form-label">Monthly Rent ($)</label><input class="form-input" id="f-rent" type="number" placeholder="1400"></div>
+      <div class="form-group"><label class="form-label">Lease Start</label><input class="form-input" id="f-leasestart" type="date"></div>
+      <div class="form-group"><label class="form-label">Lease End</label><input class="form-input" id="f-leaseend" type="date"></div>
+      <div class="form-group"><label class="form-label">Purchase Price ($)</label><input class="form-input" id="f-purchase" type="number" placeholder="185000"></div>
+      <div class="form-group"><label class="form-label">Est. Current Value ($)</label><input class="form-input" id="f-value" type="number" placeholder="210000"></div>
+      <div class="form-group"><label class="form-label">Sq Footage</label><input class="form-input" id="f-sqft" type="number" placeholder="1200"></div>
+      <div class="form-group"><label class="form-label">Number of Units</label><input class="form-input" id="f-units" type="number" placeholder="1" min="1"></div>
+      <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-input" id="f-notes" style="min-height:60px;resize:vertical" placeholder="Any notes…"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addProperty()">Add Property</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MANAGEMENT MODAL -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">Manage Clients</div>
+    <div id="clientList" style="margin-bottom:18px"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div class="form-label" style="margin-bottom:6px">Add New Client</div>
+      <div style="display:flex;gap:8px">
+        <input class="form-input" id="newClientName" placeholder="e.g. Johnson Family" style="flex:1">
+        <button class="btn btn-primary" onclick="addClient()">Add</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn" onclick="closeClientModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD EXPENSE MODAL -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Add Expense</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="exp-cat">
+          <option>Mortgage (P&I)</option><option>Property Taxes</option><option>Insurance</option>
+          <option>Property Mgmt</option><option>Repairs & Maintenance</option><option>Landscaping</option>
+          <option>Utilities</option><option>HOA</option><option>Vacancy Reserve</option>
+          <option>CapEx Reserve</option><option>Accounting / Legal</option><option>Other</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="exp-desc" placeholder="e.g. Homeowners insurance renewal"></div>
+      <div class="form-group"><label class="form-label">Amount / Month ($)</label><input class="form-input" id="exp-amt" type="number" placeholder="120"></div>
+      <div class="form-group"><label class="form-label">Frequency</label>
+        <select class="form-select" id="exp-freq"><option value="monthly">Monthly</option><option value="annual">Annual (will be divided by 12)</option><option value="onetime">One-time</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeExpenseModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExpense()">Add Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MAINTENANCE MODAL -->
+<div class="modal-overlay" id="maintModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Add Maintenance Entry</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="maint-date" type="date"></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="maint-desc" placeholder="e.g. HVAC service"></div>
+      <div class="form-group"><label class="form-label">Cost ($)</label><input class="form-input" id="maint-cost" type="number" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Vendor</label><input class="form-input" id="maint-vendor" placeholder="e.g. Cape Fear HVAC"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeMaintModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMaintEntry()">Add Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PROPERTY MODAL -->
+<div class="modal-overlay" id="editPropModal">
+  <div class="modal">
+    <div class="modal-title">Edit Property</div>
+    <div class="form-grid">
+      <div class="form-group full"><label class="form-label">Address</label><input class="form-input" id="ep-address"></div>
+      <div class="form-group"><label class="form-label">Property Type</label>
+        <select class="form-select" id="ep-type"><option>SFR</option><option>Duplex</option><option>Triplex</option><option>Quad</option><option>Condo</option><option>Commercial</option></select></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="ep-status"><option value="occupied">Occupied</option><option value="vacant">Vacant</option><option value="maintenance">Maintenance</option></select></div>
+      <div class="form-group"><label class="form-label">Tenant Name</label><input class="form-input" id="ep-tenant"></div>
+      <div class="form-group"><label class="form-label">Monthly Rent ($)</label><input class="form-input" id="ep-rent" type="number"></div>
+      <div class="form-group"><label class="form-label">Lease Start</label><input class="form-input" id="ep-leasestart" type="date"></div>
+      <div class="form-group"><label class="form-label">Lease End</label><input class="form-input" id="ep-leaseend" type="date"></div>
+      <div class="form-group"><label class="form-label">Purchase Price ($)</label><input class="form-input" id="ep-purchase" type="number"></div>
+      <div class="form-group"><label class="form-label">Est. Current Value ($)</label><input class="form-input" id="ep-value" type="number"></div>
+      <div class="form-group"><label class="form-label">Sq Footage</label><input class="form-input" id="ep-sqft" type="number"></div>
+      <div class="form-group"><label class="form-label">Number of Units</label><input class="form-input" id="ep-units" type="number" min="1"></div>
+      <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-input" id="ep-notes" style="min-height:60px;resize:vertical"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeEditPropModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditedProperty()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT DEBT MODAL -->
+<div class="modal-overlay" id="debtModal">
+  <div class="modal">
+    <div class="modal-title">Edit Debt Terms</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Lender</label><input class="form-input" id="de-lender"></div>
+      <div class="form-group"><label class="form-label">Loan Type</label>
+        <select class="form-select" id="de-type">
+          <option>Conventional</option><option>FHA</option><option>VA</option>
+          <option>DSCR</option><option>Portfolio</option><option>Hard Money</option>
+          <option>Seller Finance</option><option>HELOC</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Original Balance ($)</label><input class="form-input" id="de-orig" type="number"></div>
+      <div class="form-group"><label class="form-label">Current Balance ($)</label><input class="form-input" id="de-cur" type="number"></div>
+      <div class="form-group"><label class="form-label">Interest Rate (%)</label><input class="form-input" id="de-rate" type="number" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Term (years)</label><input class="form-input" id="de-term" type="number"></div>
+      <div class="form-group"><label class="form-label">Monthly P&I ($)</label><input class="form-input" id="de-pmt" type="number"></div>
+      <div class="form-group"><label class="form-label">Origination Date</label><input class="form-input" id="de-start" type="date"></div>
+      <div class="form-group"><label class="form-label">Escrow Included?</label>
+        <select class="form-select" id="de-escrow"><option value="0">No</option><option value="1">Yes</option></select></div>
+      <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-input" id="de-notes" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDebtModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDebt()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PROFORMA MODAL -->
+<div class="modal-overlay" id="proformaModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">Edit Proforma Assumptions</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Rent Growth / yr (%)</label><input class="form-input" id="pf-rg" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Expense Growth / yr (%)</label><input class="form-input" id="pf-eg" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Vacancy Rate (%)</label><input class="form-input" id="pf-vac" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Mgmt Fee (%)</label><input class="form-input" id="pf-mgmt" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">CapEx Reserve (%)</label><input class="form-input" id="pf-capex" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Exit Cap Rate (%)</label><input class="form-input" id="pf-exitcap" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Appreciation / yr (%)</label><input class="form-input" id="pf-appr" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Hold Period (years)</label><input class="form-input" id="pf-hold" type="number"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeProformaModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProforma()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Add Contact</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="con-name" placeholder="John Smith"></div>
+      <div class="form-group"><label class="form-label">Role</label>
+        <select class="form-select" id="con-role"><option>Lender</option><option>Insurance Agent</option><option>Property Manager</option><option>Contractor</option><option>Attorney</option><option>CPA / Accountant</option><option>Real Estate Agent</option><option>Inspector</option><option>Other</option></select></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="con-phone" type="tel" placeholder="(910) 555-1234"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="con-email" type="email" placeholder="john@example.com"></div>
+      <div class="form-group"><label class="form-label">Company</label><input class="form-input" id="con-company" placeholder="First Bank"></div>
+      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="con-notes" placeholder="Any notes…"></div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeContactModal()">Cancel</button><button class="btn btn-primary" onclick="saveContact()">Add Contact</button></div>
+  </div>
+</div>
+
+<!-- ACTIVITY MODAL -->
+<div class="modal-overlay" id="activityModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">Add Activity Entry</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="act-type"><option value="note">Note</option><option value="call">Call / Meeting</option><option value="action">Action Item</option><option value="alert">Alert / Flag</option></select></div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="act-date" type="date"></div>
+      <div class="form-group"><label class="form-label">Entry</label><textarea class="form-input" id="act-body" style="min-height:90px;resize:vertical" placeholder="What happened, what was discussed, what needs to happen…"></textarea></div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeActivityModal()">Cancel</button><button class="btn btn-primary" onclick="saveActivityEntry()">Add</button></div>
+  </div>
+</div>
+
+<!-- ACQUISITION ANALYZER MODAL -->
+<div class="modal-overlay" id="acqModal">
+  <div class="modal">
+    <div class="modal-title">🔍 Acquisition Analyzer</div>
+    <div class="form-grid">
+      <div class="form-group full"><label class="form-label">Property Address / Description</label><input class="form-input" id="acq-addr" placeholder="456 Pine St, Charleston SC"></div>
+      <div class="form-group"><label class="form-label">Purchase Price ($)</label><input class="form-input" id="acq-price" type="number" placeholder="250000" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Down Payment (%)</label><input class="form-input" id="acq-down" type="number" placeholder="20" step="0.5" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Interest Rate (%)</label><input class="form-input" id="acq-rate" type="number" placeholder="6.5" step="0.125" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Loan Term (years)</label><input class="form-input" id="acq-term" type="number" placeholder="30" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Gross Monthly Rent ($)</label><input class="form-input" id="acq-rent" type="number" placeholder="2000" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Property Taxes /mo ($)</label><input class="form-input" id="acq-tax" type="number" placeholder="150" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Insurance /mo ($)</label><input class="form-input" id="acq-ins" type="number" placeholder="100" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Other Expenses /mo ($)</label><input class="form-input" id="acq-other" type="number" placeholder="0" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Vacancy Rate (%)</label><input class="form-input" id="acq-vac" type="number" placeholder="5" step="0.5" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">Mgmt Fee (%)</label><input class="form-input" id="acq-mgmt" type="number" placeholder="8" step="0.5" oninput="calcAcq()"></div>
+      <div class="form-group"><label class="form-label">CapEx Reserve (%)</label><input class="form-input" id="acq-capex" type="number" placeholder="5" step="0.5" oninput="calcAcq()"></div>
+    </div>
+    <div id="acqResults"></div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn" onclick="closeAcqModal()">Close</button>
+      <button class="btn btn-teal" onclick="addAcqToPortfolio()">Add to Portfolio</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- GOAL MODAL -->
+<div class="modal-overlay" id="goalModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title">Add Goal</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-group"><label class="form-label">Goal Type</label>
+        <select class="form-select" id="goal-type">
+          <option value="properties">Total Properties</option>
+          <option value="noi">Monthly NOI Target</option>
+          <option value="equity">Total Equity Target</option>
+          <option value="units">Total Units / Doors</option>
+          <option value="cashflow">Annual Cash Flow</option>
+          <option value="custom">Custom</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Goal Label</label><input class="form-input" id="goal-label" placeholder="e.g. Reach 10 properties"></div>
+      <div class="form-group"><label class="form-label">Target Value</label><input class="form-input" id="goal-target" type="number" placeholder="e.g. 10"></div>
+      <div class="form-group"><label class="form-label">Target Date</label><input class="form-input" id="goal-date" type="date"></div>
+      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="goal-notes" placeholder="Any context…"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeGoalModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGoal()">Add Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- REFINANCE ANALYZER MODAL -->
+<div class="modal-overlay" id="refiModal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-title">🔄 Refinance Analyzer</div>
+    <div id="refiPropName" style="font-size:13px;color:var(--text-dim);margin-bottom:14px;font-family:var(--font-mono)"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Current Loan</div>
+        <div id="refiCurrentSummary"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">New Terms</div>
+        <div class="form-grid" style="grid-template-columns:1fr;gap:8px;margin-bottom:0">
+          <div class="form-group"><label class="form-label">New Rate (%)</label><input class="form-input" id="refi-rate" type="number" step="0.125" placeholder="5.5" oninput="calcRefi()"></div>
+          <div class="form-group"><label class="form-label">New Term (years)</label><input class="form-input" id="refi-term" type="number" placeholder="30" oninput="calcRefi()"></div>
+          <div class="form-group"><label class="form-label">New Loan Amount ($)</label><input class="form-input" id="refi-loan" type="number" placeholder="same as current" oninput="calcRefi()"></div>
+          <div class="form-group"><label class="form-label">Cash Out ($)</label><input class="form-input" id="refi-cashout" type="number" placeholder="0" oninput="calcRefi()"></div>
+          <div class="form-group"><label class="form-label">Closing Costs ($)</label><input class="form-input" id="refi-costs" type="number" placeholder="3000" oninput="calcRefi()"></div>
+        </div>
+      </div>
+    </div>
+    <div id="refiResults"></div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn" onclick="closeRefiModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF REPORT MODAL -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Generate Monthly Report</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-group"><label class="form-label">Report Month</label><input class="form-input" id="rpt-month" type="month"></div>
+      <div class="form-group"><label class="form-label">Consultant Name</label><input class="form-input" id="rpt-consultant" placeholder="Your name / firm"></div>
+      <div class="form-group"><label class="form-label">Include Sections</label>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)"><input type="checkbox" id="rpt-summary" checked> Portfolio Summary</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)"><input type="checkbox" id="rpt-dscr" checked> DSCR Analysis</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)"><input type="checkbox" id="rpt-rentroll" checked> Rent Roll</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)"><input type="checkbox" id="rpt-appreciation"> Appreciation Summary</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)"><input type="checkbox" id="rpt-notes"> Consultant Notes</label>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Cover Note (optional)</label><textarea class="form-input" id="rpt-covernote" style="min-height:70px;resize:vertical" placeholder="Brief message to include at top of report…"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeReportModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="generateReport()">Generate & Print</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// MULTI-CLIENT DATA LAYER
+// ─────────────────────────────────────────────
+// Storage structure:
+//   pt_clients      = [{id, name}]
+//   pt_active       = clientId (string)
+//   pt_props_{id}   = [...properties] for each client
+
+function loadClients(){
+  try{ return JSON.parse(localStorage.getItem('pt_clients')||'[]'); } catch(e){ return []; }
+}
+function saveClients(clients){ localStorage.setItem('pt_clients',JSON.stringify(clients)); }
+function getActiveClientId(){ return localStorage.getItem('pt_active')||''; }
+function setActiveClientId(id){ localStorage.setItem('pt_active',id); }
+function loadPropsForClient(id){
+  try{ return JSON.parse(localStorage.getItem('pt_props_'+id)||'[]'); } catch(e){ return []; }
+}
+function savePropsForClient(id,props){ localStorage.setItem('pt_props_'+id,JSON.stringify(props)); }
+
+function mkDebt(){return{lender:'',loanType:'Conventional',originalBalance:0,currentBalance:0,rate:3.5,termYears:30,startDate:'',monthlyPayment:0,escrow:false,notes:''};}
+function mkProforma(){return{rentGrowth:2,expenseGrowth:3,vacancyRate:5,mgmtRate:8,capexRate:5,holdYears:10,exitCap:7,appreciationRate:3};}
+function migrateProps(props){
+  props.forEach(p=>{
+    if(!p.debt) p.debt=mkDebt();
+    if(!p.proforma) p.proforma=mkProforma();
+    if(!p.expenses) p.expenses=[];
+    if(!p.maintenance) p.maintenance=[];
+    if(!p.contacts) p.contacts=[];
+    if(!p.purchasePrice) p.purchasePrice=0;
+    if(!p.estimatedValue) p.estimatedValue=0;
+    if(!p.sqft) p.sqft=0;
+    if(!p.units) p.units=1;
+  });
+  return props;
+}
+
+// Bootstrap: migrate legacy single-client data if present
+(function bootstrap(){
+  let clients=loadClients();
+  if(!clients.length){
+    // Check for legacy data
+    const legacy=localStorage.getItem('mb_portfolio_v2');
+    const firstId='client_'+Date.now();
+    const firstName='My Portfolio';
+    clients=[{id:firstId,name:firstName}];
+    saveClients(clients);
+    setActiveClientId(firstId);
+    if(legacy){
+      try{
+        const legacyProps=JSON.parse(legacy);
+        savePropsForClient(firstId,migrateProps(legacyProps));
+      } catch(e){}
+    }
+  }
+  if(!getActiveClientId()||!clients.find(c=>c.id===getActiveClientId())){
+    setActiveClientId(clients[0].id);
+  }
+})();
+
+// Active working state
+let clients=loadClients();
+let activeClientId=getActiveClientId();
+let properties=migrateProps(loadPropsForClient(activeClientId));
+
+// If first-time and no properties, seed demo data
+if(!properties.length && clients.length===1){
+  properties=[
+    {id:1,address:'412 Castle St, Wilmington NC',type:'SFR',status:'occupied',tenant:'Mark & Lisa Holt',rent:1650,leaseStart:'2023-09-01',leaseEnd:'2024-08-31',purchasePrice:175000,estimatedValue:210000,notes:'Long-term tenants. AC replaced 2022.',
+     expenses:[{id:101,cat:'Mortgage (P&I)',desc:'Primary mortgage',amt:920,freq:'monthly'},{id:102,cat:'Property Taxes',desc:'County tax',amt:80,freq:'monthly'},{id:103,cat:'Insurance',desc:'Homeowners',amt:110,freq:'monthly'},{id:104,cat:'Vacancy Reserve',desc:'5% reserve',amt:83,freq:'monthly'}],
+     debt:Object.assign(mkDebt(),{lender:'First Bank',loanType:'Conventional',originalBalance:140000,currentBalance:131000,rate:4.25,termYears:30,startDate:'2019-06-01',monthlyPayment:920}),
+     proforma:Object.assign(mkProforma(),{}),
+     maintenance:[{id:201,date:'2022-08-15',desc:'AC unit replacement',cost:3200,vendor:'Cape Fear HVAC'}]},
+    {id:2,address:'817 Nun St, Wilmington NC',type:'Duplex',status:'occupied',tenant:'Unit A: Ray Torres / Unit B: Vacant',rent:2600,leaseStart:'2024-01-01',leaseEnd:'2024-12-31',purchasePrice:265000,estimatedValue:305000,notes:'Unit B vacancy since March.',
+     expenses:[{id:111,cat:'Mortgage (P&I)',desc:'Duplex mortgage',amt:1300,freq:'monthly'},{id:112,cat:'Property Taxes',desc:'County tax',amt:140,freq:'monthly'},{id:113,cat:'Insurance',desc:'Landlord policy',amt:185,freq:'monthly'}],
+     debt:Object.assign(mkDebt(),{lender:'Coastal Credit Union',loanType:'Conventional',originalBalance:212000,currentBalance:198000,rate:4.75,termYears:30,startDate:'2020-03-01',monthlyPayment:1300}),
+     proforma:Object.assign(mkProforma(),{}),
+     maintenance:[{id:211,date:'2024-02-10',desc:'Water heater replacement Unit A',cost:680,vendor:'Plumb Right'}]}
+  ];
+  save();
+}
+
+function save(){ savePropsForClient(activeClientId,properties); }
+
+// ─────────────────────────────────────────────
+// CLIENT SWITCHING
+// ─────────────────────────────────────────────
+function switchClient(id){
+  if(!id) return;
+  // Close all open property tabs
+  document.querySelectorAll('.tab-btn[id^="tab-prop-"]').forEach(b=>b.remove());
+  document.querySelectorAll('.view[id^="view-prop-"]').forEach(v=>v.remove());
+  activeSubtab={};
+  // Switch
+  activeClientId=id;
+  setActiveClientId(id);
+  properties=migrateProps(loadPropsForClient(id));
+  loadClientActivity();
+  // Reset to portfolio view
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#mainContent > .view').forEach(v=>v.classList.remove('active'));
+  document.querySelector('[data-tab="portfolio"]')?.classList.add('active');
+  document.getElementById('view-portfolio')?.classList.add('active');
+  updateAll();
+}
+
+function renderClientSelect(){
+  const sel=document.getElementById('clientSelect');
+  sel.innerHTML=clients.map(c=>`<option value="${c.id}" ${c.id===activeClientId?'selected':''}>${c.name}</option>`).join('');
+}
+
+// ─────────────────────────────────────────────
+// CLIENT MODAL
+// ─────────────────────────────────────────────
+function openClientModal(){
+  renderClientList();
+  document.getElementById('clientModal').classList.add('open');
+}
+function closeClientModal(){ document.getElementById('clientModal').classList.remove('open'); }
+
+function renderClientList(){
+  const el=document.getElementById('clientList');
+  if(!clients.length){ el.innerHTML='<div style="color:var(--text-dim);font-size:13px">No clients yet.</div>'; return; }
+  el.innerHTML=clients.map(c=>{
+    const propCount=loadPropsForClient(c.id).length;
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text-hi)">${c.name}</div>
+        <div style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono)">${propCount} propert${propCount===1?'y':'ies'}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-sm" onclick="renameClient('${c.id}')">Rename</button>
+        <button class="btn btn-sm" onclick="exportClient('${c.id}')">Export</button>
+        ${clients.length>1?`<button class="btn btn-sm btn-danger" onclick="deleteClient('${c.id}')">Delete</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addClient(){
+  const name=document.getElementById('newClientName').value.trim();
+  if(!name){ alert('Enter a client name.'); return; }
+  const id='client_'+Date.now();
+  clients.push({id,name});
+  saveClients(clients);
+  document.getElementById('newClientName').value='';
+  renderClientList();
+  renderClientSelect();
+  showToast(`Client "${name}" added`);
+}
+
+function renameClient(id){
+  const c=clients.find(x=>x.id===id);
+  if(!c) return;
+  const newName=prompt('New name:',c.name);
+  if(!newName||!newName.trim()) return;
+  c.name=newName.trim();
+  saveClients(clients);
+  renderClientList();
+  renderClientSelect();
+  showToast('Client renamed');
+}
+
+function deleteClient(id){
+  const c=clients.find(x=>x.id===id);
+  if(!c) return;
+  if(clients.length<=1){ alert("Can't delete the only client."); return; }
+  if(!confirm(`Delete "${c.name}" and all their properties? This cannot be undone.`)) return;
+  clients=clients.filter(x=>x.id!==id);
+  localStorage.removeItem('pt_props_'+id);
+  saveClients(clients);
+  if(activeClientId===id){ switchClient(clients[0].id); }
+  renderClientList();
+  renderClientSelect();
+  showToast('Client deleted');
+}
+
+function exportClient(id){
+  const c=clients.find(x=>x.id===id);
+  const props=loadPropsForClient(id);
+  const blob=new Blob([JSON.stringify({client:c,properties:props},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download=`${(c?.name||'client').replace(/\s+/g,'-').toLowerCase()}-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported');
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function fmt$(n,decimals=0){
+  if(n===null||n===undefined||n==='') return '—';
+  const v=Number(n);
+  if(isNaN(v)) return '—';
+  const abs=Math.abs(v);
+  let s;
+  if(abs>=1000000) s=(v/1000000).toFixed(2)+'M';
+  else if(abs>=1000) s='$'+Math.round(v).toLocaleString();
+  else s='$'+v.toFixed(decimals);
+  return v<0?'-'+s.replace('-',''):s;
+}
+function fmtPct(n){return n===null||n===undefined?'—':Number(n).toFixed(1)+'%';}
+function fmtDate(d){if(!d)return'—';const[y,m,dy]=d.split('-');return`${m}/${dy}/${y.slice(2)}`;}
+function daysUntil(d){if(!d)return null;return Math.round((new Date(d)-new Date())/86400000);}
+function statusBadge(s){
+  const m={occupied:'badge-occupied',vacant:'badge-vacant',maintenance:'badge-maintenance'};
+  const l={occupied:'Occupied',vacant:'Vacant',maintenance:'Maintenance'};
+  return`<span class="badge ${m[s]||''}">${l[s]||s}</span>`;
+}
+function totalMonthlyExpenses(p){
+  return (p.expenses||[]).reduce((s,e)=>{
+    let a=Number(e.amt)||0;
+    if(e.freq==='annual') a=a/12;
+    if(e.freq==='onetime') a=0;
+    return s+a;
+  },0);
+}
+function monthlyNOI(p){
+  return (Number(p.rent)||0) - totalMonthlyExpenses(p);
+}
+function capRate(p){
+  const annualNOI = monthlyNOI(p)*12;
+  const val = Number(p.estimatedValue)||0;
+  if(!val) return null;
+  return annualNOI/val*100;
+}
+function cashOnCash(p){
+  const annualNOI = monthlyNOI(p)*12;
+  const equity = (Number(p.estimatedValue)||0)-(Number(p.debt?.currentBalance)||0);
+  if(!equity) return null;
+  return annualNOI/equity*100;
+}
+// DSCR = Annual NOI / Annual Debt Service
+// Lenders typically require >= 1.25; below 1.0 = cash-flow negative
+function calcDSCR(p){
+  const annNOI = monthlyNOI(p)*12;
+  const annDS  = (Number(p.debt?.monthlyPayment)||0)*12;
+  if(!annDS) return null;
+  return annNOI / annDS;
+}
+function dscrBadge(dscr){
+  if(dscr===null) return '<span style="color:var(--text-dim);font-family:var(--font-mono);font-size:12px">—</span>';
+  const v=dscr.toFixed(2)+'x';
+  if(dscr>=1.25) return `<span class="badge badge-dscr-ok">${v}</span>`;
+  if(dscr>=1.0)  return `<span class="badge badge-dscr-warn">${v} ⚠</span>`;
+  return             `<span class="badge badge-dscr-fail">${v} ✕</span>`;
+}
+function calcAppreciation(p){
+  const purchase=Number(p.purchasePrice)||0;
+  const current=Number(p.estimatedValue)||0;
+  if(!purchase||!current) return null;
+  const gain=current-purchase;
+  const pct=(gain/purchase)*100;
+  return{gain,pct};
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ─────────────────────────────────────────────
+// HEALTH BAR
+// ─────────────────────────────────────────────
+function updateHealthBar(){
+  const total=properties.length;
+  if(!total) return;
+  const occ=properties.filter(p=>p.status==='occupied').length;
+  const vac=properties.filter(p=>p.status==='vacant').length;
+  const mnt=properties.filter(p=>p.status==='maintenance').length;
+  document.getElementById('hb-occ').style.width=(occ/total*100)+'%';
+  document.getElementById('hb-vac').style.width=(vac/total*100)+'%';
+  document.getElementById('hb-mnt').style.width=(mnt/total*100)+'%';
+  document.getElementById('hb-summary').textContent=`${occ} occupied · ${vac} vacant · ${mnt} maintenance · ${total} total`;
+}
+
+// ─────────────────────────────────────────────
+// PORTFOLIO STATS
+// ─────────────────────────────────────────────
+function updateStats(){
+  const total=properties.length;
+  const grossRent=properties.reduce((s,p)=>s+(Number(p.rent)||0),0);
+  const totalExp=properties.reduce((s,p)=>s+totalMonthlyExpenses(p),0);
+  const totalNOI=grossRent-totalExp;
+  const occupancy=total?Math.round(properties.filter(p=>p.status==='occupied').length/total*100):0;
+  const ytdMaint=properties.flatMap(p=>p.maintenance||[]).filter(m=>m.cost>0).reduce((s,m)=>s+Number(m.cost),0);
+  const totVal=properties.reduce((s,p)=>s+(Number(p.estimatedValue)||0),0);
+  const totDebt=properties.reduce((s,p)=>s+(Number(p.debt?.currentBalance)||0),0);
+  const totEquity=totVal-totDebt;
+  const annNOI=totalNOI*12;
+  const portCapRate=totVal?annNOI/totVal*100:0;
+  const portCoC=totEquity?annNOI/totEquity*100:0;
+
+  document.getElementById('statGrid').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Properties</div><div class="stat-value">${total}</div><div class="stat-sub">${occupancy}% occupied</div></div>
+    <div class="stat-card"><div class="stat-label">Gross Rent/mo</div><div class="stat-value green">${fmt$(grossRent)}</div><div class="stat-sub">${fmt$(grossRent*12)}/yr</div></div>
+    <div class="stat-card"><div class="stat-label">Expenses/mo</div><div class="stat-value red">${fmt$(totalExp)}</div><div class="stat-sub">${fmt$(totalExp*12)}/yr</div></div>
+    <div class="stat-card"><div class="stat-label">Portfolio NOI/mo</div><div class="stat-value ${totalNOI>=0?'green':'red'}">${fmt$(totalNOI)}</div><div class="stat-sub">${fmt$(annNOI)}/yr</div></div>
+    <div class="stat-card"><div class="stat-label">Maint YTD</div><div class="stat-value amber">${fmt$(ytdMaint)}</div></div>
+    <div class="stat-card"><div class="stat-label">Cap Rate</div><div class="stat-value blue">${fmtPct(portCapRate)}</div><div class="stat-sub">portfolio blended</div></div>
+    <div class="stat-card"><div class="stat-label">Cash-on-Cash</div><div class="stat-value purple">${fmtPct(portCoC)}</div><div class="stat-sub">on equity</div></div>
+    ${(()=>{
+      const flagged=properties.filter(p=>{const d=calcDSCR(p);return d!==null&&d<1.25;});
+      const failing=flagged.filter(p=>{const d=calcDSCR(p);return d<1.0;});
+      const color=failing.length?'red':flagged.length?'amber':'green';
+      return`<div class="stat-card"><div class="stat-label">DSCR Flags</div><div class="stat-value ${color}">${flagged.length}</div><div class="stat-sub">${failing.length} below 1.0x</div></div>`;
+    })()}
+  `;
+
+  updateAlertsPanel();
+
+  const tPurchasePortfolio=properties.reduce((s,p)=>s+(Number(p.purchasePrice)||0),0);
+  const tGainPortfolio=totVal-tPurchasePortfolio;
+  document.getElementById('portfolioValueGrid').innerHTML=`
+    <div class="detail-card">
+      <div class="detail-card-title">Portfolio Value & Equity</div>
+      <div class="field-row"><span class="field-label">Total Purchase Price</span><span class="field-value">${tPurchasePortfolio?fmt$(tPurchasePortfolio):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Total Est. Value</span><span class="field-value blue">${fmt$(totVal)}</span></div>
+      <div class="field-row"><span class="field-label">Total Appreciation</span><span class="field-value ${tGainPortfolio>=0?'green':'red'}">${tPurchasePortfolio?fmt$(tGainPortfolio)+' ('+((tGainPortfolio/tPurchasePortfolio)*100).toFixed(1)+'%)':'—'}</span></div>
+      <div class="field-row"><span class="field-label">Total Debt</span><span class="field-value red">${fmt$(totDebt)}</span></div>
+      <div class="field-row total"><span class="field-label bold">Total Equity</span><span class="field-value green big">${fmt$(totEquity)}</span></div>
+      <div class="field-row" style="margin-top:6px"><span class="field-label">LTV</span><span class="field-value ${totVal?(totDebt/totVal*100)>75?'red':'amber':''}">${totVal?fmtPct(totDebt/totVal*100):'—'}</span></div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Annual Income Summary</div>
+      <div class="field-row"><span class="field-label">Gross Rental Income</span><span class="field-value green">${fmt$(grossRent*12)}</span></div>
+      <div class="field-row"><span class="field-label">Total Operating Exp.</span><span class="field-value red">(${fmt$(totalExp*12)})</span></div>
+      <div class="field-row subtotal"><span class="field-label bold">Net Operating Income</span><span class="field-value ${annNOI>=0?'green':'red'}">${fmt$(annNOI)}</span></div>
+      <div class="field-row" style="margin-top:4px"><span class="field-label">Avg NOI/property</span><span class="field-value">${total?fmt$(annNOI/total):'—'}</span></div>
+    </div>
+  `;
+
+  // Averages summary panel
+  renderAvgPanel(total,grossRent,totVal,tPurchasePortfolio);
+}
+
+// ─────────────────────────────────────────────
+// PORTFOLIO TABLE
+// ─────────────────────────────────────────────
+function updateTable(){
+  const tbody=document.getElementById('propertyTableBody');
+  const tfoot=document.getElementById('propertyTableFoot');
+  if(!properties.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:32px">No properties — add one to get started.</td></tr>';tfoot.innerHTML='';return;}
+  tbody.innerHTML=properties.map(p=>{
+    const exp=totalMonthlyExpenses(p);
+    const n=monthlyNOI(p);
+    const eq=(Number(p.estimatedValue)||0)-(Number(p.debt?.currentBalance)||0);
+    return`<tr onclick="openProperty(${p.id})">
+      <td>${p.address}</td>
+      <td style="color:var(--text-dim)">${p.type}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;color:var(--text-dim)">${p.tenant||'—'}</td>
+      <td class="mono">${p.rent?fmt$(p.rent):'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td class="mono" style="color:var(--red)">${fmt$(exp)}</td>
+      <td class="mono" style="color:${n>=0?'var(--green)':'var(--red)'}">${fmt$(n)}</td>
+      <td>${dscrBadge(calcDSCR(p))}</td>
+      <td class="mono" style="color:var(--text-dim)">${p.purchasePrice?fmt$(p.purchasePrice):'—'}</td>
+      <td class="mono" style="color:var(--blue)">${p.estimatedValue?fmt$(p.estimatedValue):'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td class="mono">${(()=>{const a=calcAppreciation(p);return a===null?'<span style="color:var(--text-dim)">—</span>':`<span style="color:${a.gain>=0?'var(--green)':'var(--red)'}">${a.gain>=0?'+':''}${fmt$(a.gain)} <span style="font-size:10px">(${a.gain>=0?'+':''}${a.pct.toFixed(1)}%)</span></span>`})()}</td>
+      <td class="mono" style="color:var(--red)">${p.debt?.currentBalance?fmt$(p.debt.currentBalance):'—'}</td>
+      <td class="mono" style="color:var(--green)">${p.estimatedValue?fmt$(eq):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const tRent=properties.reduce((s,p)=>s+(Number(p.rent)||0),0);
+  const tExp=properties.reduce((s,p)=>s+totalMonthlyExpenses(p),0);
+  const tNOI=tRent-tExp;
+  const tPurchase=properties.reduce((s,p)=>s+(Number(p.purchasePrice)||0),0);
+  const tVal=properties.reduce((s,p)=>s+(Number(p.estimatedValue)||0),0);
+  const tDebt=properties.reduce((s,p)=>s+(Number(p.debt?.currentBalance)||0),0);
+  const tEq=tVal-tDebt;
+  const tGain=tVal-tPurchase;
+  tfoot.innerHTML=`<tr>
+    <td colspan="4">TOTAL (${properties.length})</td>
+    <td>${fmt$(tRent)}</td><td style="color:var(--red)">${fmt$(tExp)}</td>
+    <td style="color:${tNOI>=0?'var(--green)':'var(--red)'}">${fmt$(tNOI)}</td>
+    <td></td>
+    <td>${tPurchase?fmt$(tPurchase):'—'}</td>
+    <td style="color:var(--blue)">${fmt$(tVal)}</td>
+    <td style="color:${tGain>=0?'var(--green)':'var(--red)'}">${tPurchase?fmt$(tGain):''} ${tPurchase&&tVal?`<span style="font-size:10px">(${tGain>=0?'+':''}${((tGain/tPurchase)*100).toFixed(1)}%)</span>`:''}</td>
+    <td style="color:var(--red)">${fmt$(tDebt)}</td>
+    <td style="color:var(--green)">${fmt$(tEq)}</td>
+  </tr>`;
+}
+
+// ─────────────────────────────────────────────
+// AVERAGES SUMMARY PANEL
+// ─────────────────────────────────────────────
+function renderAvgPanel(total,grossRent,totVal,totPurchase){
+  const el=document.getElementById('portfolioAvgPanel');
+  if(!total||!el){if(el)el.innerHTML='';return;}
+
+  const occupied=properties.filter(p=>p.status==='occupied'&&p.rent>0);
+  const withSqft=properties.filter(p=>p.sqft>0);
+  const withUnits=properties.filter(p=>p.units>0);
+  const totalUnits=properties.reduce((s,p)=>s+(Number(p.units)||1),0);
+  const totalSqft=properties.reduce((s,p)=>s+(Number(p.sqft)||0),0);
+
+  const avgRentPerProp=occupied.length?occupied.reduce((s,p)=>s+(Number(p.rent)||0),0)/occupied.length:null;
+  const avgRentPerUnit=totalUnits?grossRent/totalUnits:null;
+  const avgRentPerSqft=totalSqft?grossRent/totalSqft:null;
+  const avgValPerProp=total?totVal/total:null;
+  const avgValPerUnit=totalUnits?totVal/totalUnits:null;
+  const avgValPerSqft=totalSqft?totVal/totalSqft:null;
+  const avgPurchasePerProp=totPurchase&&total?totPurchase/total:null;
+
+  const propsWithAppreciation=properties.filter(p=>p.purchasePrice>0&&p.estimatedValue>0);
+  const avgAppPct=propsWithAppreciation.length
+    ?propsWithAppreciation.reduce((s,p)=>s+((p.estimatedValue-p.purchasePrice)/p.purchasePrice*100),0)/propsWithAppreciation.length
+    :null;
+
+  el.innerHTML=`
+  <div style="margin-bottom:8px;font-size:11px;font-family:var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)">
+    Portfolio Averages <span style="font-weight:400;color:var(--muted);margin-left:8px">— add sq footage & units per property for full metrics</span>
+  </div>
+  <div class="detail-grid">
+    <div class="detail-card">
+      <div class="detail-card-title">Rent Averages</div>
+      <div class="field-row"><span class="field-label">Avg Rent / Property</span><span class="field-value green">${avgRentPerProp!==null?fmt$(avgRentPerProp)+'/mo':'—'}</span></div>
+      <div class="field-row"><span class="field-label">Avg Rent / Unit (door)</span><span class="field-value green">${avgRentPerUnit!==null?fmt$(avgRentPerUnit)+'/mo':'—'}</span></div>
+      <div class="field-row"><span class="field-label">Avg Rent / Sq Ft</span><span class="field-value">${avgRentPerSqft!==null?'$'+avgRentPerSqft.toFixed(2)+'/sf':'—'}</span></div>
+      <div class="field-row" style="margin-top:4px"><span class="field-label">Total Units (doors)</span><span class="field-value">${totalUnits}</span></div>
+      <div class="field-row"><span class="field-label">Total Sq Footage</span><span class="field-value">${totalSqft?totalSqft.toLocaleString()+' sf':'—'}</span></div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Value Averages</div>
+      <div class="field-row"><span class="field-label">Avg Purchase / Property</span><span class="field-value">${avgPurchasePerProp!==null?fmt$(avgPurchasePerProp):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Avg Est. Value / Property</span><span class="field-value blue">${avgValPerProp!==null?fmt$(avgValPerProp):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Avg Value / Unit (door)</span><span class="field-value blue">${avgValPerUnit!==null?fmt$(avgValPerUnit):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Avg Value / Sq Ft</span><span class="field-value">${avgValPerSqft!==null?'$'+avgValPerSqft.toFixed(0)+'/sf':'—'}</span></div>
+      <div class="field-row" style="margin-top:4px"><span class="field-label">Avg Appreciation</span><span class="field-value ${avgAppPct!==null&&avgAppPct>=0?'green':'red'}">${avgAppPct!==null?(avgAppPct>=0?'+':'')+avgAppPct.toFixed(1)+'% avg gain':'—'}</span></div>
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// MAIN TAB SWITCHING
+// ─────────────────────────────────────────────
+function switchMainTab(tabId,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#mainContent > .view').forEach(v=>v.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const v=document.getElementById('view-'+tabId);
+  if(v) v.classList.add('active');
+  if(tabId==='activity')renderActivityView();
+  if(tabId==='rentroll')renderRentRoll();
+  if(tabId==='snapshots')renderSnapshots();
+  if(tabId==='goals')renderGoals();
+}
+
+// ─────────────────────────────────────────────
+// PROPERTY DETAIL
+// ─────────────────────────────────────────────
+function openProperty(id){
+  const p=properties.find(x=>x.id===id);
+  if(!p) return;
+  const tabId='prop-'+id;
+  if(!document.getElementById('tab-'+tabId)){
+    const nav=document.getElementById('tabNav');
+    const btn=document.createElement('button');
+    btn.className='tab-btn';btn.id='tab-'+tabId;btn.dataset.tab=tabId;
+    const short=p.address.split(',')[0];
+    btn.onclick=()=>switchMainTab(tabId,btn);
+    btn.innerHTML=`${short} <span onclick="closePropertyTab(event,${id})" style="margin-left:5px;opacity:.45;font-size:11px">✕</span>`;
+    nav.appendChild(btn);
+  }
+  if(!document.getElementById('view-'+tabId)){
+    const div=document.createElement('div');
+    div.className='view';div.id='view-'+tabId;
+    document.getElementById('mainContent').appendChild(div);
+  }
+  if(!activeSubtab[id]) activeSubtab[id]='overview';
+  renderPropertyView(p);
+  const tabBtn=document.getElementById('tab-'+tabId);
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#mainContent > .view').forEach(v=>v.classList.remove('active'));
+  tabBtn.classList.add('active');
+  document.getElementById('view-'+tabId).classList.add('active');
+}
+
+function renderPropertyView(p){
+  const tabId='prop-'+p.id;
+  const el=document.getElementById('view-'+tabId);
+  const sub=activeSubtab[p.id]||'overview';
+  const subtabs=[
+    {id:'overview',label:'Overview'},
+    {id:'expenses',label:'Expenses'},
+    {id:'debt',label:'Debt'},
+    {id:'proforma',label:'Proforma'},
+    {id:'yearly',label:'Year-by-Year'},
+    {id:'maintenance',label:'Maintenance'},
+    {id:'contacts',label:'Contacts'},
+  ];
+  const n=monthlyNOI(p);
+  const exp=totalMonthlyExpenses(p);
+  const cap=capRate(p);
+  const coc=cashOnCash(p);
+  const equity=(Number(p.estimatedValue)||0)-(Number(p.debt?.currentBalance)||0);
+
+  el.innerHTML=`
+  <div class="prop-header">
+    <div>
+      <div class="prop-title">${p.address}</div>
+      <div class="prop-subtitle">${p.type} · ${statusBadge(p.status)} · ${p.tenant||'No tenant'}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-danger btn-sm" id="del-btn-${p.id}" onclick="armDelete(${p.id})">Delete</button>
+    </div>
+  </div>
+  <div class="prop-subtabs">
+    ${subtabs.map(s=>`<button class="subtab-btn${sub===s.id?' active':''}" onclick="switchSubtab(${p.id},'${s.id}')">${s.label}</button>`).join('')}
+  </div>
+  ${sub==='overview'    ?renderOverview(p,n,exp,cap,coc,equity):''}
+  ${sub==='expenses'    ?renderExpenses(p):''}
+  ${sub==='debt'        ?renderDebt(p,equity):''}
+  ${sub==='proforma'    ?renderProforma(p):''}
+  ${sub==='yearly'      ?renderYearly(p):''}
+  ${sub==='maintenance' ?renderMaintenance(p):''}
+  ${sub==='contacts'    ?renderContacts(p):''}
+  `;
+}
+
+function switchSubtab(id,sub){
+  activeSubtab[id]=sub;
+  const p=properties.find(x=>x.id===id);
+  renderPropertyView(p);
+}
+
+// ── OVERVIEW ──
+function renderOverview(p,n,exp,cap,coc,equity){
+  const leaseExpiry=p.leaseEnd?(new Date(p.leaseEnd)<new Date()?'<span style="color:var(--red)">Expired</span>':'<span style="color:var(--green)">Active</span>'):'—';
+  return`
+  <div class="detail-grid">
+    <div class="detail-card">
+      <div class="detail-card-title">Tenant & Lease
+        <button class="btn btn-sm" onclick="editTenantModal(${p.id})">Edit</button>
+      </div>
+      <div class="field-row"><span class="field-label">Tenant</span><span class="field-value hi">${p.tenant||'—'}</span></div>
+      <div class="field-row"><span class="field-label">Status</span>${statusBadge(p.status)}</div>
+      <div class="field-row"><span class="field-label">Lease Start</span><span class="field-value">${fmtDate(p.leaseStart)}</span></div>
+      <div class="field-row"><span class="field-label">Lease End</span><span class="field-value">${fmtDate(p.leaseEnd)}</span></div>
+      <div class="field-row"><span class="field-label">Lease Status</span>${leaseExpiry}</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Monthly Financials</div>
+      <div class="field-row"><span class="field-label">Gross Rent</span><span class="field-value green">${fmt$(p.rent)}</span></div>
+      <div class="field-row"><span class="field-label">Total Expenses</span><span class="field-value red">(${fmt$(exp)})</span></div>
+      <div class="field-row total"><span class="field-label bold">NOI / month</span><span class="field-value ${n>=0?'green':'red'} big">${fmt$(n)}</span></div>
+      <div class="field-row" style="margin-top:4px"><span class="field-label">NOI / year</span><span class="field-value ${n>=0?'green':'red'}">${fmt$(n*12)}</span></div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Value & Returns
+        <button class="btn btn-sm" onclick="editValueModal(${p.id})">Edit</button>
+      </div>
+      <div class="field-row"><span class="field-label">Purchase Price</span><span class="field-value">${fmt$(p.purchasePrice)}</span></div>
+      <div class="field-row"><span class="field-label">Est. Value</span><span class="field-value blue">${fmt$(p.estimatedValue)}</span></div>
+      ${(()=>{const a=calcAppreciation(p);return a?`
+      <div class="field-row"><span class="field-label">Appreciation $</span><span class="field-value ${a.gain>=0?'green':'red'}">${a.gain>=0?'+':''}${fmt$(a.gain)}</span></div>
+      <div class="field-row"><span class="field-label">Appreciation %</span><span class="field-value ${a.gain>=0?'green':'red'}">${a.gain>=0?'+':''}${a.pct.toFixed(1)}%</span></div>`:'';})()}
+      <div class="field-row"><span class="field-label">Sq Footage</span><span class="field-value">${p.sqft?p.sqft.toLocaleString()+' sf':'—'}</span></div>
+      <div class="field-row"><span class="field-label">Units / Doors</span><span class="field-value">${p.units||1}</span></div>
+      <div class="field-row"><span class="field-label">Rent / Sq Ft</span><span class="field-value">${p.sqft&&p.rent?'$'+(p.rent/p.sqft).toFixed(2)+'/sf':'—'}</span></div>
+      <div class="field-row"><span class="field-label">Rent / Door</span><span class="field-value">${p.rent?(fmt$(p.rent/(p.units||1))+'/unit'):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Debt Balance</span><span class="field-value red">${fmt$(p.debt?.currentBalance)}</span></div>
+      <div class="field-row subtotal"><span class="field-label bold">Equity</span><span class="field-value green big">${fmt$(equity)}</span></div>
+      <div class="field-row" style="margin-top:6px"><span class="field-label">Cap Rate</span><span class="field-value blue">${cap!==null?fmtPct(cap):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Cash-on-Cash</span><span class="field-value purple">${coc!==null?fmtPct(coc):'—'}</span></div>
+    </div>
+  </div>
+  <div class="detail-grid">
+    ${renderDSCRCard(p)}
+    <div class="detail-card">
+      <div class="detail-card-title">Notes</div>
+      <textarea class="notes-area" id="notes-${p.id}" onblur="saveNotes(${p.id})">${p.notes||''}</textarea>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:5px;font-family:var(--font-mono)">Auto-saves on blur</div>
+    </div>
+  </div>`;
+}
+
+// ── DSCR DETAIL CARD (used in overview) ──
+function renderDSCRCard(p){
+  const dscr=calcDSCR(p);
+  const annNOI=monthlyNOI(p)*12;
+  const annDS=(Number(p.debt?.monthlyPayment)||0)*12;
+  const shortfall=annNOI-annDS;
+  const rentNeeded=annDS>0?(annDS/12/(1-0.05)):null; // rough: DS / (1 - vacancy%) / 12
+  const dscrColor=dscr===null?'':dscr>=1.25?'green':dscr>=1.0?'amber':'red';
+  const threshold=1.25;
+  const targetNOI=annDS*threshold;
+  const gapToThreshold=targetNOI-annNOI;
+  return`<div class="detail-card" style="${dscr!==null&&dscr<1.0?'border-color:var(--red)':dscr!==null&&dscr<1.25?'border-color:var(--amber)':''}">
+    <div class="detail-card-title">DSCR Coverage</div>
+    <div class="field-row"><span class="field-label">Annual NOI</span><span class="field-value ${annNOI>=0?'green':'red'}">${fmt$(annNOI)}</span></div>
+    <div class="field-row"><span class="field-label">Annual Debt Service</span><span class="field-value red">${annDS?fmt$(annDS):'—'}</span></div>
+    <div class="field-row total"><span class="field-label bold">DSCR</span><span class="field-value ${dscrColor} big">${dscr!==null?dscr.toFixed(2)+'x':'—'}</span></div>
+    <div class="field-row" style="margin-top:6px"><span class="field-label">1.25x Threshold</span><span class="field-value ${dscr!==null&&dscr>=1.25?'green':'amber'}">Required</span></div>
+    ${dscr!==null&&dscr<1.25?`
+    <div class="field-row"><span class="field-label">NOI Needed @ 1.25x</span><span class="field-value amber">${fmt$(targetNOI)}/yr</span></div>
+    <div class="field-row"><span class="field-label">Gap to Threshold</span><span class="field-value red">${fmt$(gapToThreshold)}/yr · ${fmt$(gapToThreshold/12)}/mo</span></div>`:''}
+    ${dscr!==null&&dscr<1.0?`<div style="margin-top:10px;background:var(--red-dim);border-radius:5px;padding:8px 10px;font-size:11px;font-family:var(--font-mono);color:var(--red)">⚠ Property is cash-flow negative — NOI does not cover debt service</div>`:''}
+    ${dscr!==null&&dscr>=1.25?`<div style="margin-top:10px;background:var(--green-dim);border-radius:5px;padding:8px 10px;font-size:11px;font-family:var(--font-mono);color:var(--green)">✓ Meets lender DSCR threshold</div>`:''}
+  </div>`;
+}
+
+// ── EXPENSES ──
+function renderExpenses(p){
+  const cats={};
+  (p.expenses||[]).forEach(e=>{
+    const c=e.cat||'Other';
+    if(!cats[c]) cats[c]=[];
+    cats[c].push(e);
+  });
+  const total=totalMonthlyExpenses(p);
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="font-size:13px;color:var(--text-dim)">Line-item monthly expenses · Total: <span style="color:var(--red);font-family:var(--font-mono);font-weight:600">${fmt$(total)}/mo</span></div>
+    <button class="btn btn-primary btn-sm" onclick="openExpenseModal(${p.id})">+ Add Expense</button>
+  </div>
+  <div class="detail-card">
+    <div class="detail-card-title">Expense Breakdown</div>`;
+
+  if(!(p.expenses||[]).length){
+    html+=`<div style="color:var(--text-dim);font-size:13px;padding:16px 0">No expenses yet. Add line items to build your expense stack.</div>`;
+  } else {
+    Object.entries(cats).forEach(([cat,items])=>{
+      const catTotal=items.reduce((s,e)=>{let a=Number(e.amt)||0;if(e.freq==='annual')a/=12;if(e.freq==='onetime')a=0;return s+a;},0);
+      html+=`<div style="margin-bottom:8px">
+        <div style="font-size:10px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);padding:6px 0 4px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+          <span>${cat}</span><span style="color:var(--amber)">${fmt$(catTotal)}/mo</span></div>`;
+      items.forEach(e=>{
+        let dispAmt=Number(e.amt)||0;
+        let freqNote='';
+        if(e.freq==='annual'){freqNote=` <span style="color:var(--text-dim)">(${fmt$(e.amt)}/yr)</span>`;dispAmt/=12;}
+        if(e.freq==='onetime'){freqNote=` <span style="color:var(--text-dim)">(one-time)</span>`;dispAmt=0;}
+        html+=`<div class="expense-row">
+          <span class="expense-name">${e.desc||e.cat}${freqNote}</span>
+          <span class="expense-amt">${e.freq==='onetime'?'<span style="color:var(--text-dim)">—</span>':fmt$(dispAmt)+'/mo'}</span>
+          <button class="expense-del" onclick="deleteExpense(${p.id},${e.id})" title="Remove">✕</button>
+        </div>`;
+      });
+      html+=`</div>`;
+    });
+
+    html+=`<div class="field-row total"><span class="field-label bold">Total Monthly Expenses</span><span class="field-value red big">${fmt$(total)}</span></div>
+    <div class="field-row"><span class="field-label">NOI after expenses</span><span class="field-value ${monthlyNOI(p)>=0?'green':'red'}">${fmt$(monthlyNOI(p))}/mo</span></div>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+
+// ── DEBT ──
+function renderDebt(p,equity){
+  const d=p.debt||mkDebt();
+  const ltv=p.estimatedValue?(Number(d.currentBalance)/Number(p.estimatedValue)*100):null;
+  const annualInt=Number(d.currentBalance)*Number(d.rate)/100;
+  const monthlyInt=annualInt/12;
+  const monthlyPI=Number(d.monthlyPayment)||0;
+  const monthlyPrincipal=Math.max(0,monthlyPI-monthlyInt);
+  return`
+  <div class="detail-grid">
+    <div class="detail-card">
+      <div class="detail-card-title">Loan Terms
+        <button class="btn btn-sm" onclick="editDebtModal(${p.id})">Edit</button>
+      </div>
+      <div class="field-row"><span class="field-label">Lender</span><span class="field-value hi">${d.lender||'—'}</span></div>
+      <div class="field-row"><span class="field-label">Loan Type</span><span class="field-value">${d.loanType||'—'}</span></div>
+      <div class="field-row"><span class="field-label">Original Balance</span><span class="field-value">${fmt$(d.originalBalance)}</span></div>
+      <div class="field-row"><span class="field-label">Current Balance</span><span class="field-value red">${fmt$(d.currentBalance)}</span></div>
+      <div class="field-row"><span class="field-label">Interest Rate</span><span class="field-value amber">${d.rate?fmtPct(d.rate):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Loan Term</span><span class="field-value">${d.termYears?d.termYears+' years':'—'}</span></div>
+      <div class="field-row"><span class="field-label">Origination Date</span><span class="field-value">${fmtDate(d.startDate)}</span></div>
+      <div class="field-row"><span class="field-label">Escrow Included</span><span class="field-value">${d.escrow?'Yes':'No'}</span></div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Payment Breakdown</div>
+      <div class="field-row"><span class="field-label">Monthly P&I Payment</span><span class="field-value hi">${fmt$(monthlyPI)}</span></div>
+      <div class="field-row"><span class="field-label">Est. Interest Portion</span><span class="field-value red">${fmt$(monthlyInt)}/mo</span></div>
+      <div class="field-row"><span class="field-label">Est. Principal Portion</span><span class="field-value green">${fmt$(monthlyPrincipal)}/mo</span></div>
+      <div class="field-row subtotal"><span class="field-label">Annual Interest Paid</span><span class="field-value red">${fmt$(annualInt)}</span></div>
+      <div class="field-row"><span class="field-label">Annual Principal</span><span class="field-value green">${fmt$(monthlyPrincipal*12)}</span></div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Equity Position</div>
+      <div class="field-row"><span class="field-label">Est. Market Value</span><span class="field-value blue">${fmt$(p.estimatedValue)}</span></div>
+      <div class="field-row"><span class="field-label">Outstanding Debt</span><span class="field-value red">${fmt$(d.currentBalance)}</span></div>
+      <div class="field-row total"><span class="field-label bold">Equity</span><span class="field-value green big">${fmt$(equity)}</span></div>
+      <div class="field-row" style="margin-top:6px"><span class="field-label">LTV</span><span class="field-value ${ltv?ltv>80?'red':ltv>70?'amber':'green':''}">${ltv?fmtPct(ltv):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Equity %</span><span class="field-value green">${p.estimatedValue?fmtPct(equity/Number(p.estimatedValue)*100):'—'}</span></div>
+    </div>
+    ${d.notes?`<div class="detail-card"><div class="detail-card-title">Debt Notes</div><div style="font-size:13px;color:var(--text);line-height:1.6">${d.notes}</div></div>`:''}
+  </div>`;
+}
+
+// ── PROFORMA ──
+function renderProforma(p){
+  const pf=p.proforma||mkProforma();
+  const rent0=Number(p.rent)||0;
+  const exp0=totalMonthlyExpenses(p);
+  const annRent=rent0*12;
+  const annExp=exp0*12;
+  const vacancyAmt=annRent*(pf.vacancyRate/100);
+  const mgmtAmt=annRent*(pf.mgmtRate/100);
+  const capexAmt=annRent*(pf.capexRate/100);
+  const effectiveGrossIncome=annRent-vacancyAmt;
+  const operatingExpenses=annExp+mgmtAmt+capexAmt;
+  const noi=effectiveGrossIncome-operatingExpenses;
+  const annDebtService=(Number(p.debt?.monthlyPayment)||0)*12;
+  const cashFlow=noi-annDebtService;
+  const exitValue=noi/(pf.exitCap/100);
+  const purchasePrice=Number(p.purchasePrice)||Number(p.estimatedValue)||0;
+  const equity0=(Number(p.estimatedValue)||0)-(Number(p.debt?.currentBalance)||0);
+  const coc=equity0?cashFlow/equity0*100:null;
+  const capRateVal=p.estimatedValue?noi/Number(p.estimatedValue)*100:null;
+
+  // Year 1 projections with growth
+  const years=Number(pf.holdYears)||10;
+  const rows=[];
+  let rv=annRent,ev=annExp,dbal=Number(p.debt?.currentBalance)||0;
+  const mpi=Number(p.debt?.monthlyPayment)||0;
+  const rate=Number(p.debt?.rate)||0;
+  for(let y=1;y<=years;y++){
+    if(y>1){rv*=(1+pf.rentGrowth/100);ev*=(1+pf.expenseGrowth/100);}
+    const vac=rv*(pf.vacancyRate/100);
+    const mgmt=rv*(pf.mgmtRate/100);
+    const capex=rv*(pf.capexRate/100);
+    const egi=rv-vac;
+    const oe=ev+mgmt+capex;
+    const n=egi-oe;
+    const ds=mpi*12;
+    const cf=n-ds;
+    const val=n/(pf.exitCap/100);
+    const appVal=purchasePrice*Math.pow(1+pf.appreciationRate/100,y);
+    rows.push({y,rv,egi,oe,n,ds,cf,val:Math.max(val,appVal),dbal});
+    // rough debt paydown
+    const monthlyInt=dbal*rate/100/12;
+    const monthlyPrin=Math.max(0,mpi-monthlyInt);
+    dbal=Math.max(0,dbal-monthlyPrin*12);
+  }
+  const lastRow=rows[rows.length-1];
+  const exitEquity=lastRow.val-lastRow.dbal;
+  const totalCF=rows.reduce((s,r)=>s+r.cf,0);
+  const irr=equity0?(totalCF+exitEquity)/equity0/years*100:null;// simplified
+
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+    <div>
+      <div style="font-size:13px;color:var(--text-dim)">Standard proforma · Adjust assumptions below</div>
+    </div>
+    <button class="btn btn-sm" onclick="editProformaModal(${p.id})">Edit Assumptions</button>
+  </div>
+  <div class="detail-grid" style="margin-bottom:16px">
+    <div class="detail-card">
+      <div class="detail-card-title">Proforma Assumptions</div>
+      <div class="field-row"><span class="field-label">Rent Growth / yr</span><span class="field-value amber">${fmtPct(pf.rentGrowth)}</span></div>
+      <div class="field-row"><span class="field-label">Expense Growth / yr</span><span class="field-value amber">${fmtPct(pf.expenseGrowth)}</span></div>
+      <div class="field-row"><span class="field-label">Vacancy Rate</span><span class="field-value amber">${fmtPct(pf.vacancyRate)}</span></div>
+      <div class="field-row"><span class="field-label">Mgmt Fee</span><span class="field-value amber">${fmtPct(pf.mgmtRate)}</span></div>
+      <div class="field-row"><span class="field-label">CapEx Reserve</span><span class="field-value amber">${fmtPct(pf.capexRate)}</span></div>
+      <div class="field-row"><span class="field-label">Exit Cap Rate</span><span class="field-value amber">${fmtPct(pf.exitCap)}</span></div>
+      <div class="field-row"><span class="field-label">Appreciation / yr</span><span class="field-value amber">${fmtPct(pf.appreciationRate)}</span></div>
+      <div class="field-row"><span class="field-label">Hold Period</span><span class="field-value">${pf.holdYears} years</span></div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Year 1 Operating Statement</div>
+      <div class="field-row"><span class="field-label">Gross Scheduled Income</span><span class="field-value green">${fmt$(annRent)}</span></div>
+      <div class="field-row"><span class="field-label">Less Vacancy (${pf.vacancyRate}%)</span><span class="field-value red">(${fmt$(vacancyAmt)})</span></div>
+      <div class="field-row subtotal"><span class="field-label bold">Effective Gross Income</span><span class="field-value green">${fmt$(effectiveGrossIncome)}</span></div>
+      <div class="field-row" style="margin-top:8px"><span class="field-label">Operating Expenses</span><span class="field-value red">(${fmt$(annExp)})</span></div>
+      <div class="field-row"><span class="field-label">Mgmt Fee (${pf.mgmtRate}%)</span><span class="field-value red">(${fmt$(mgmtAmt)})</span></div>
+      <div class="field-row"><span class="field-label">CapEx Reserve (${pf.capexRate}%)</span><span class="field-value red">(${fmt$(capexAmt)})</span></div>
+      <div class="field-row subtotal"><span class="field-label bold">Net Operating Income</span><span class="field-value ${noi>=0?'green':'red'}">${fmt$(noi)}</span></div>
+      <div class="field-row"><span class="field-label">Annual Debt Service</span><span class="field-value red">(${fmt$(annDebtService)})</span></div>
+      <div class="field-row total"><span class="field-label bold">Cash Flow (Year 1)</span><span class="field-value ${cashFlow>=0?'green':'red'} big">${fmt$(cashFlow)}</span></div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-title">Returns Summary</div>
+      <div class="field-row"><span class="field-label">Cap Rate (Y1)</span><span class="field-value blue">${capRateVal!==null?fmtPct(capRateVal):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Cash-on-Cash (Y1)</span><span class="field-value purple">${coc!==null?fmtPct(coc):'—'}</span></div>
+      <div class="field-row"><span class="field-label">Gross Rent Mult.</span><span class="field-value">${p.estimatedValue&&annRent?(Number(p.estimatedValue)/annRent).toFixed(1)+'x':'—'}</span></div>
+      <div class="field-row subtotal"><span class="field-label">Exit Value (Y${years})</span><span class="field-value blue">${fmt$(lastRow.val)}</span></div>
+      <div class="field-row"><span class="field-label">Exit Debt</span><span class="field-value red">${fmt$(lastRow.dbal)}</span></div>
+      <div class="field-row"><span class="field-label">Exit Equity</span><span class="field-value green">${fmt$(exitEquity)}</span></div>
+      <div class="field-row"><span class="field-label">Total Cash Flow</span><span class="field-value green">${fmt$(totalCF)}</span></div>
+      <div class="field-row total"><span class="field-label bold">Equity Multiple (est.)</span><span class="field-value purple big">${equity0?((exitEquity+totalCF)/equity0).toFixed(2)+'x':'—'}</span></div>
+    </div>
+  </div>`;
+}
+
+// ── YEAR-BY-YEAR ──
+function renderYearly(p){
+  const pf=p.proforma||mkProforma();
+  const years=Number(pf.holdYears)||10;
+  const mpi=Number(p.debt?.monthlyPayment)||0;
+  const rate=Number(p.debt?.rate)||0;
+  let rv=(Number(p.rent)||0)*12, ev=totalMonthlyExpenses(p)*12, dbal=Number(p.debt?.currentBalance)||0;
+  const purchasePrice=Number(p.purchasePrice)||Number(p.estimatedValue)||0;
+  const rows=[];
+  for(let y=1;y<=years;y++){
+    if(y>1){rv*=(1+pf.rentGrowth/100);ev*=(1+pf.expenseGrowth/100);}
+    const vac=rv*(pf.vacancyRate/100);
+    const mgmt=rv*(pf.mgmtRate/100);
+    const capex=rv*(pf.capexRate/100);
+    const egi=rv-vac;
+    const oe=ev+mgmt+capex;
+    const n=egi-oe;
+    const ds=mpi*12;
+    const cf=n-ds;
+    const noiVal=n/(pf.exitCap/100);
+    const appVal=purchasePrice*Math.pow(1+pf.appreciationRate/100,y);
+    const val=Math.max(noiVal,appVal);
+    const eq=val-dbal;
+    rows.push({y,rv,egi,n,cf,val,dbal,eq});
+    const monthlyInt=dbal*rate/100/12;
+    const monthlyPrin=Math.max(0,mpi-monthlyInt);
+    dbal=Math.max(0,dbal-monthlyPrin*12);
+  }
+
+  const colClass=(v)=>v>=0?'style="color:var(--green)"':'style="color:var(--red)"';
+  return`
+  <div style="font-size:13px;color:var(--text-dim);margin-bottom:12px">Projected ${years}-year hold · Based on proforma assumptions</div>
+  <div class="year-table-wrap">
+    <table class="year-table">
+      <thead><tr>
+        <th style="text-align:left">Year</th>
+        <th>Gross Rent</th><th>Eff. Gross Inc.</th><th>NOI</th>
+        <th>Debt Service</th><th>Cash Flow</th>
+        <th>Est. Value</th><th>Debt Balance</th><th>Equity</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr>
+          <td>Year ${r.y}</td>
+          <td style="color:var(--green)">${fmt$(r.rv)}</td>
+          <td>${fmt$(r.egi)}</td>
+          <td ${colClass(r.n)}>${fmt$(r.n)}</td>
+          <td style="color:var(--red)">${fmt$(mpi*12)}</td>
+          <td ${colClass(r.cf)}>${fmt$(r.cf)}</td>
+          <td style="color:var(--blue)">${fmt$(r.val)}</td>
+          <td style="color:var(--red)">${fmt$(r.dbal)}</td>
+          <td style="color:var(--green)">${fmt$(r.eq)}</td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot class="row-total"><tr>
+        <td>Totals</td>
+        <td></td><td></td>
+        <td style="color:var(--green)">${fmt$(rows.reduce((s,r)=>s+r.n,0))}</td>
+        <td style="color:var(--red)">${fmt$(rows.reduce((s,r)=>s+mpi*12,0))}</td>
+        <td style="${rows.reduce((s,r)=>s+r.cf,0)>=0?'color:var(--green)':'color:var(--red)'}">${fmt$(rows.reduce((s,r)=>s+r.cf,0))}</td>
+        <td></td><td></td>
+        <td style="color:var(--green)">${fmt$(rows[rows.length-1].eq)}</td>
+      </tr></tfoot>
+    </table>
+  </div>`;
+}
+
+// ── MAINTENANCE ──
+function renderMaintenance(p){
+  const log=p.maintenance||[];
+  const ytd=log.filter(m=>m.cost>0).reduce((s,m)=>s+Number(m.cost),0);
+  let rows=log.length
+    ?log.slice().sort((a,b)=>b.date?.localeCompare(a.date||'')).map(m=>`
+      <tr>
+        <td style="color:var(--text-dim)">${fmtDate(m.date)}</td>
+        <td>${m.desc}</td>
+        <td style="color:var(--text-dim)">${m.vendor||'—'}</td>
+        <td class="mono" style="color:${m.cost?'var(--amber)':'var(--text-dim)'}">${m.cost?fmt$(m.cost):'—'}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="deleteMaint(${p.id},${m.id})">✕</button></td>
+      </tr>`).join('')
+    :'<tr><td colspan="5" style="color:var(--text-dim);padding:20px">No maintenance records.</td></tr>';
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="font-size:13px;color:var(--text-dim)">Total logged costs: <span style="color:var(--amber);font-family:var(--font-mono);font-weight:600">${fmt$(ytd)}</span></div>
+    <button class="btn btn-primary btn-sm" onclick="openMaintModal(${p.id})">+ Add Entry</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th>Vendor</th><th>Cost</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// EDIT MODALS
+// ─────────────────────────────────────────────
+let _editingPropId=null;
+
+function editTenantModal(id){
+  const p=properties.find(x=>x.id===id);
+  if(!p) return;
+  _editingPropId=id;
+  document.getElementById('ep-address').value=p.address||'';
+  document.getElementById('ep-type').value=p.type||'SFR';
+  document.getElementById('ep-status').value=p.status||'occupied';
+  document.getElementById('ep-tenant').value=p.tenant||'';
+  document.getElementById('ep-rent').value=p.rent||'';
+  document.getElementById('ep-leasestart').value=p.leaseStart||'';
+  document.getElementById('ep-leaseend').value=p.leaseEnd||'';
+  document.getElementById('ep-purchase').value=p.purchasePrice||'';
+  document.getElementById('ep-value').value=p.estimatedValue||'';
+  document.getElementById('ep-sqft').value=p.sqft||'';
+  document.getElementById('ep-units').value=p.units||1;
+  document.getElementById('ep-notes').value=p.notes||'';
+  document.getElementById('editPropModal').classList.add('open');
+}
+function editValueModal(id){ editTenantModal(id); }
+function closeEditPropModal(){ document.getElementById('editPropModal').classList.remove('open'); }
+
+function saveEditedProperty(){
+  const id=_editingPropId;
+  const p=properties.find(x=>x.id===id);
+  if(!p) return;
+  p.address=document.getElementById('ep-address').value.trim()||p.address;
+  p.type=document.getElementById('ep-type').value;
+  p.status=document.getElementById('ep-status').value;
+  p.tenant=document.getElementById('ep-tenant').value.trim()||'—';
+  p.rent=parseFloat(document.getElementById('ep-rent').value)||0;
+  p.leaseStart=document.getElementById('ep-leasestart').value;
+  p.leaseEnd=document.getElementById('ep-leaseend').value;
+  p.purchasePrice=parseFloat(document.getElementById('ep-purchase').value)||0;
+  p.estimatedValue=parseFloat(document.getElementById('ep-value').value)||0;
+  p.sqft=parseInt(document.getElementById('ep-sqft').value)||0;
+  p.units=parseInt(document.getElementById('ep-units').value)||1;
+  p.notes=document.getElementById('ep-notes').value.trim();
+  save();closeEditPropModal();renderPropertyView(p);updateAll();showToast('Saved');
+}
+
+function editDebtModal(id){
+  const p=properties.find(x=>x.id===id);
+  if(!p) return;
+  _editingPropId=id;
+  const d=p.debt||mkDebt();
+  document.getElementById('de-lender').value=d.lender||'';
+  document.getElementById('de-type').value=d.loanType||'Conventional';
+  document.getElementById('de-orig').value=d.originalBalance||0;
+  document.getElementById('de-cur').value=d.currentBalance||0;
+  document.getElementById('de-rate').value=d.rate||0;
+  document.getElementById('de-term').value=d.termYears||30;
+  document.getElementById('de-pmt').value=d.monthlyPayment||0;
+  document.getElementById('de-start').value=d.startDate||'';
+  document.getElementById('de-escrow').value=d.escrow?'1':'0';
+  document.getElementById('de-notes').value=d.notes||'';
+  document.getElementById('debtModal').classList.add('open');
+}
+function closeDebtModal(){ document.getElementById('debtModal').classList.remove('open'); }
+
+function saveDebt(){
+  const p=properties.find(x=>x.id===_editingPropId);
+  if(!p) return;
+  p.debt={
+    lender:document.getElementById('de-lender').value,
+    loanType:document.getElementById('de-type').value,
+    originalBalance:parseFloat(document.getElementById('de-orig').value)||0,
+    currentBalance:parseFloat(document.getElementById('de-cur').value)||0,
+    rate:parseFloat(document.getElementById('de-rate').value)||0,
+    termYears:parseInt(document.getElementById('de-term').value)||30,
+    monthlyPayment:parseFloat(document.getElementById('de-pmt').value)||0,
+    startDate:document.getElementById('de-start').value,
+    escrow:document.getElementById('de-escrow').value==='1',
+    notes:document.getElementById('de-notes').value,
+  };
+  save();closeDebtModal();renderPropertyView(p);updateAll();showToast('Debt terms saved');
+}
+
+function editProformaModal(id){
+  const p=properties.find(x=>x.id===id);
+  if(!p) return;
+  _editingPropId=id;
+  const pf=p.proforma||mkProforma();
+  document.getElementById('pf-rg').value=pf.rentGrowth;
+  document.getElementById('pf-eg').value=pf.expenseGrowth;
+  document.getElementById('pf-vac').value=pf.vacancyRate;
+  document.getElementById('pf-mgmt').value=pf.mgmtRate;
+  document.getElementById('pf-capex').value=pf.capexRate;
+  document.getElementById('pf-exitcap').value=pf.exitCap;
+  document.getElementById('pf-appr').value=pf.appreciationRate;
+  document.getElementById('pf-hold').value=pf.holdYears;
+  document.getElementById('proformaModal').classList.add('open');
+}
+function closeProformaModal(){ document.getElementById('proformaModal').classList.remove('open'); }
+
+function saveProforma(){
+  const p=properties.find(x=>x.id===_editingPropId);
+  if(!p) return;
+  p.proforma={
+    rentGrowth:parseFloat(document.getElementById('pf-rg').value)||2,
+    expenseGrowth:parseFloat(document.getElementById('pf-eg').value)||3,
+    vacancyRate:parseFloat(document.getElementById('pf-vac').value)||5,
+    mgmtRate:parseFloat(document.getElementById('pf-mgmt').value)||8,
+    capexRate:parseFloat(document.getElementById('pf-capex').value)||5,
+    exitCap:parseFloat(document.getElementById('pf-exitcap').value)||7,
+    appreciationRate:parseFloat(document.getElementById('pf-appr').value)||3,
+    holdYears:parseInt(document.getElementById('pf-hold').value)||10,
+  };
+  save();closeProformaModal();renderPropertyView(p);showToast('Proforma saved');
+}
+
+// ─────────────────────────────────────────────
+// EXPENSES
+// ─────────────────────────────────────────────
+let _expensePropId=null;
+function openExpenseModal(id){_expensePropId=id;document.getElementById('expenseModal').classList.add('open');}
+function closeExpenseModal(){document.getElementById('expenseModal').classList.remove('open');}
+function saveExpense(){
+  const p=properties.find(x=>x.id===_expensePropId);if(!p)return;
+  const amt=parseFloat(document.getElementById('exp-amt').value)||0;
+  if(!amt){alert('Enter an amount.');return;}
+  p.expenses=p.expenses||[];
+  p.expenses.push({
+    id:Date.now(),
+    cat:document.getElementById('exp-cat').value,
+    desc:document.getElementById('exp-desc').value.trim()||document.getElementById('exp-cat').value,
+    amt,
+    freq:document.getElementById('exp-freq').value,
+  });
+  save();closeExpenseModal();renderPropertyView(p);updateAll();showToast('Expense added');
+  document.getElementById('exp-desc').value='';document.getElementById('exp-amt').value='';
+}
+function deleteExpense(propId,expId){
+  const p=properties.find(x=>x.id===propId);if(!p)return;
+  p.expenses=p.expenses.filter(e=>e.id!==expId);
+  save();renderPropertyView(p);updateAll();
+}
+
+// ─────────────────────────────────────────────
+// MAINTENANCE
+// ─────────────────────────────────────────────
+let _maintPropId=null;
+function openMaintModal(id){_maintPropId=id;document.getElementById('maintModal').classList.add('open');}
+function closeMaintModal(){document.getElementById('maintModal').classList.remove('open');}
+function saveMaintEntry(){
+  const p=properties.find(x=>x.id===_maintPropId);if(!p)return;
+  const desc=document.getElementById('maint-desc').value.trim();
+  if(!desc){alert('Enter a description.');return;}
+  p.maintenance=p.maintenance||[];
+  p.maintenance.push({
+    id:Date.now(),
+    date:document.getElementById('maint-date').value,
+    desc,
+    cost:parseFloat(document.getElementById('maint-cost').value)||0,
+    vendor:document.getElementById('maint-vendor').value.trim(),
+  });
+  save();closeMaintModal();renderPropertyView(p);updateAll();showToast('Entry added');
+  ['maint-date','maint-desc','maint-cost','maint-vendor'].forEach(i=>document.getElementById(i).value='');
+}
+function deleteMaint(propId,maintId){
+  const p=properties.find(x=>x.id===propId);if(!p)return;
+  p.maintenance=p.maintenance.filter(m=>m.id!==maintId);
+  save();renderPropertyView(p);updateAll();
+}
+
+// ─────────────────────────────────────────────
+// NOTES AUTO-SAVE
+// ─────────────────────────────────────────────
+function saveNotes(id){
+  const p=properties.find(x=>x.id===id);if(!p)return;
+  const el=document.getElementById('notes-'+id);
+  if(el){p.notes=el.value;save();showToast('Notes saved');}
+}
+
+// ─────────────────────────────────────────────
+// ADD / DELETE PROPERTY
+// ─────────────────────────────────────────────
+function openAddModal(){
+  document.getElementById('addModal').classList.add('open');
+}
+function closeAddModal(){ document.getElementById('addModal').classList.remove('open'); }
+
+function addProperty(){
+  const address=document.getElementById('f-address').value.trim();
+  if(!address){alert('Address is required.');return;}
+  const p={
+    id:Date.now(),
+    address,type:document.getElementById('f-type').value,
+    status:document.getElementById('f-status').value,
+    tenant:document.getElementById('f-tenant').value.trim()||'—',
+    rent:parseFloat(document.getElementById('f-rent').value)||0,
+    leaseStart:document.getElementById('f-leasestart').value,
+    leaseEnd:document.getElementById('f-leaseend').value,
+    purchasePrice:parseFloat(document.getElementById('f-purchase').value)||0,
+    estimatedValue:parseFloat(document.getElementById('f-value').value)||0,
+    sqft:parseInt(document.getElementById('f-sqft').value)||0,
+    units:parseInt(document.getElementById('f-units').value)||1,
+    notes:document.getElementById('f-notes').value.trim(),
+    expenses:[],debt:mkDebt(),proforma:mkProforma(),contacts:[],maintenance:[],
+  };
+  properties.push(p);save();updateAll();closeAddModal();showToast('Property added');
+  ['f-address','f-tenant','f-rent','f-leasestart','f-leaseend','f-purchase','f-value','f-sqft','f-units','f-notes'].forEach(i=>document.getElementById(i).value='');
+}
+
+function armDelete(id){
+  const btn=document.getElementById('del-btn-'+id);
+  if(!btn) return;
+  btn.textContent='Confirm Delete';
+  btn.style.background='var(--red)';
+  btn.style.color='#ffffff';
+  btn.onclick=()=>deleteProperty(id);
+  setTimeout(()=>{
+    if(btn){btn.textContent='Delete';btn.style.background='';btn.style.color='';btn.onclick=()=>armDelete(id);}
+  },3000);
+}
+
+function deleteProperty(id){
+  properties=properties.filter(x=>x.id!==id);
+  save();
+  const tabId='prop-'+id;
+  document.getElementById('tab-'+tabId)?.remove();
+  document.getElementById('view-'+tabId)?.remove();
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#mainContent > .view').forEach(v=>v.classList.remove('active'));
+  const pb=document.querySelector('[data-tab="portfolio"]');
+  if(pb) pb.classList.add('active');
+  const pv=document.getElementById('view-portfolio');
+  if(pv) pv.classList.add('active');
+  updateAll();
+  showToast('Property deleted');
+}
+
+function closePropertyTab(e,id){
+  if(e) e.stopPropagation();
+  const tabId='prop-'+id;
+  document.getElementById('tab-'+tabId)?.remove();
+  document.getElementById('view-'+tabId)?.remove();
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#mainContent > .view').forEach(v=>v.classList.remove('active'));
+  const pb=document.querySelector('[data-tab="portfolio"]');
+  if(pb) pb.classList.add('active');
+  const pv=document.getElementById('view-portfolio');
+  if(pv) pv.classList.add('active');
+}
+
+// ─────────────────────────────────────────────
+// EXPORT / IMPORT (client-aware)
+// ─────────────────────────────────────────────
+function exportData(){
+  exportClient(activeClientId);
+}
+
+function importData(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const imported=JSON.parse(e.target.result);
+      // Support both formats: {client, properties} or plain array
+      let props=Array.isArray(imported)?imported:(imported.properties||[]);
+      if(!Array.isArray(props)) throw new Error('Invalid format');
+      props=migrateProps(props);
+      properties=props;
+      save();
+      document.querySelectorAll('.tab-btn[id^="tab-prop-"]').forEach(b=>b.remove());
+      document.querySelectorAll('.view[id^="view-prop-"]').forEach(v=>v.remove());
+      activeSubtab={};
+      updateAll();
+      showToast(`Imported ${properties.length} properties into ${clients.find(c=>c.id===activeClientId)?.name}`);
+    } catch(err){
+      alert('Import failed — make sure this is a valid portfolio backup file.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+
+// ─────────────────────────────────────────────
+// ALERTS PANEL
+// ─────────────────────────────────────────────
+function updateAlertsPanel(){
+  const el=document.getElementById('alertsPanel');if(!el)return;
+  const dscrFail=properties.filter(p=>{const d=calcDSCR(p);return d!==null&&d<1.0;});
+  const dscrWarn=properties.filter(p=>{const d=calcDSCR(p);return d!==null&&d>=1.0&&d<1.25;});
+  const leaseExpired=properties.filter(p=>p.leaseEnd&&daysUntil(p.leaseEnd)<0&&p.status==='occupied');
+  const leaseSoon=properties.filter(p=>p.leaseEnd&&daysUntil(p.leaseEnd)>=0&&daysUntil(p.leaseEnd)<=90&&p.status==='occupied');
+  const vacant=properties.filter(p=>p.status==='vacant');
+  let html='';
+  if(dscrFail.length){
+    html+=`<div class="alert-panel red"><div class="alert-panel-title"><span>⚠ DSCR Critical — ${dscrFail.length} propert${dscrFail.length===1?'y':'ies'} below 1.0x</span></div>
+    ${dscrFail.map(p=>{const d=calcDSCR(p);const ds=(Number(p.debt?.monthlyPayment)||0)*12;return`<div class="alert-row" onclick="openProperty(${p.id})"><span style="font-size:13px;color:var(--text-hi)">${p.address.split(',')[0]}</span><div style="display:flex;gap:8px;align-items:center">${dscrBadge(d)}<span style="font-size:11px;color:var(--text-dim)">Shortfall ${fmt$(monthlyNOI(p)*12-ds)}/yr →</span></div></div>`;}).join('')}</div>`;
+  }
+  if(dscrWarn.length){
+    html+=`<div class="alert-panel amber"><div class="alert-panel-title"><span>DSCR Warning — ${dscrWarn.length} propert${dscrWarn.length===1?'y':'ies'} below 1.25x</span></div>
+    ${dscrWarn.map(p=>{const d=calcDSCR(p);return`<div class="alert-row" onclick="openProperty(${p.id})"><span style="font-size:13px;color:var(--text-hi)">${p.address.split(',')[0]}</span>${dscrBadge(d)}</div>`;}).join('')}</div>`;
+  }
+  const allLease=[...leaseExpired,...leaseSoon];
+  if(allLease.length){
+    html+=`<div class="alert-panel amber"><div class="alert-panel-title"><span>📋 Lease Alerts — ${allLease.length} propert${allLease.length===1?'y':'ies'}</span></div>
+    ${allLease.map(p=>{const days=daysUntil(p.leaseEnd);return`<div class="alert-row" onclick="openProperty(${p.id})"><span style="font-size:13px;color:var(--text-hi)">${p.address.split(',')[0]}</span><span class="badge ${days<0?'badge-alert':'badge-soon'}">${days<0?'Expired '+Math.abs(days)+'d ago':'Expires in '+days+'d'}</span></div>`;}).join('')}</div>`;
+  }
+  if(vacant.length){
+    const carryingCost=vacant.reduce((s,p)=>s+totalMonthlyExpenses(p),0);
+    html+=`<div class="alert-panel amber"><div class="alert-panel-title"><span>🏠 Vacant — ${vacant.length} propert${vacant.length===1?'y':'ies'} not generating rent</span><span style="font-size:10px;color:var(--amber)">Carrying ${fmt$(carryingCost)}/mo</span></div>
+    ${vacant.map(p=>`<div class="alert-row" onclick="openProperty(${p.id})"><span style="font-size:13px;color:var(--text-hi)">${p.address.split(',')[0]}</span><span style="font-size:12px;color:var(--text-dim);font-family:var(--font-mono)">${fmt$(totalMonthlyExpenses(p))}/mo cost</span></div>`).join('')}</div>`;
+  }
+  if(!html&&properties.length){
+    html=`<div class="alert-panel green"><div class="alert-panel-title"><span>✓ All clear — No DSCR flags, no expiring leases, no vacancies</span></div></div>`;
+  }
+  el.innerHTML=html;
+}
+
+// ─────────────────────────────────────────────
+// ACTIVITY LOG
+// ─────────────────────────────────────────────
+let clientActivity=[];
+function loadClientActivity(){clientActivity=JSON.parse(localStorage.getItem('pt_activity_'+activeClientId)||'[]');}
+function saveClientActivity(){localStorage.setItem('pt_activity_'+activeClientId,JSON.stringify(clientActivity));}
+
+function renderActivityView(){
+  const el=document.getElementById('activityList');if(!el)return;
+  const sorted=[...clientActivity].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const cur=clients.find(c=>c.id===activeClientId);
+  const nameEl=document.getElementById('activityClientName');
+  if(nameEl)nameEl.textContent=(cur?.name||'Client')+' · Activity Log';
+  if(!sorted.length){el.innerHTML='<div style="color:var(--text-dim);padding:20px 0;font-size:13px">No activity yet. Log your first call or note.</div>';return;}
+  el.innerHTML=`<div class="detail-card">${sorted.map(e=>`<div class="activity-entry">
+    <div class="activity-meta"><div class="activity-date">${fmtDate(e.date)}</div><div class="activity-type ${e.type}">${e.type}</div></div>
+    <div class="activity-body">${e.body}</div>
+    <button class="activity-del" onclick="deleteActivityEntry('${e.id}')">✕</button>
+  </div>`).join('')}</div>`;
+}
+function openActivityModal(){
+  document.getElementById('act-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('activityModal').classList.add('open');
+}
+function closeActivityModal(){document.getElementById('activityModal').classList.remove('open');}
+function saveActivityEntry(){
+  const body=document.getElementById('act-body').value.trim();if(!body){alert('Enter a note.');return;}
+  clientActivity.push({id:'a'+Date.now(),type:document.getElementById('act-type').value,date:document.getElementById('act-date').value,body});
+  saveClientActivity();closeActivityModal();renderActivityView();
+  document.getElementById('act-body').value='';showToast('Entry added');
+}
+function deleteActivityEntry(id){clientActivity=clientActivity.filter(e=>e.id!==id);saveClientActivity();renderActivityView();}
+
+// ─────────────────────────────────────────────
+// CONTACTS (per property)
+// ─────────────────────────────────────────────
+let _contactPropId=null;
+function openContactModal(id){_contactPropId=id;document.getElementById('contactModal').classList.add('open');}
+function closeContactModal(){document.getElementById('contactModal').classList.remove('open');}
+function saveContact(){
+  const p=properties.find(x=>x.id===_contactPropId);if(!p)return;
+  const name=document.getElementById('con-name').value.trim();if(!name){alert('Enter a name.');return;}
+  if(!p.contacts)p.contacts=[];
+  p.contacts.push({id:'c'+Date.now(),name,role:document.getElementById('con-role').value,phone:document.getElementById('con-phone').value.trim(),email:document.getElementById('con-email').value.trim(),company:document.getElementById('con-company').value.trim(),notes:document.getElementById('con-notes').value.trim()});
+  save();closeContactModal();renderPropertyView(p);showToast('Contact added');
+  ['con-name','con-phone','con-email','con-company','con-notes'].forEach(i=>document.getElementById(i).value='');
+}
+function deleteContact(pid,cid){const p=properties.find(x=>x.id===pid);if(!p)return;p.contacts=(p.contacts||[]).filter(c=>c.id!==cid);save();renderPropertyView(p);}
+
+function renderContacts(p){
+  const contacts=p.contacts||[];
+  const rows=contacts.length?contacts.map(c=>`<div class="contact-row">
+    <div><div class="contact-name">${c.name}</div><div class="contact-role">${c.role}</div>${c.company?`<div class="contact-info">${c.company}</div>`:''}${(c.phone||c.email)?`<div class="contact-info">${[c.phone,c.email].filter(Boolean).join(' · ')}</div>`:''}${c.notes?`<div class="contact-info" style="font-style:italic">${c.notes}</div>`:''}</div>
+    <button class="btn btn-sm btn-danger" onclick="deleteContact(${p.id},'${c.id}')">✕</button>
+  </div>`).join(''):'<div style="color:var(--text-dim);font-size:13px;padding:12px 0">No contacts yet. Add lenders, insurance agents, contractors.</div>';
+  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;color:var(--text-dim)">Lenders, agents, contractors, property managers</div><button class="btn btn-primary btn-sm" onclick="openContactModal(${p.id})">+ Add Contact</button></div><div class="detail-card">${rows}</div>`;
+}
+
+// ─────────────────────────────────────────────
+// ACQUISITION ANALYZER
+// ─────────────────────────────────────────────
+function openAcqModal(){document.getElementById('acqModal').classList.add('open');calcAcq();}
+function closeAcqModal(){document.getElementById('acqModal').classList.remove('open');}
+function calcAcq(){
+  const price=parseFloat(document.getElementById('acq-price').value)||0;
+  const down=parseFloat(document.getElementById('acq-down').value)||20;
+  const rate=parseFloat(document.getElementById('acq-rate').value)||0;
+  const term=parseInt(document.getElementById('acq-term').value)||30;
+  const rent=parseFloat(document.getElementById('acq-rent').value)||0;
+  const tax=parseFloat(document.getElementById('acq-tax').value)||0;
+  const ins=parseFloat(document.getElementById('acq-ins').value)||0;
+  const other=parseFloat(document.getElementById('acq-other').value)||0;
+  const vac=parseFloat(document.getElementById('acq-vac').value)||5;
+  const mgmt=parseFloat(document.getElementById('acq-mgmt').value)||8;
+  const capex=parseFloat(document.getElementById('acq-capex').value)||5;
+  if(!price||!rent){document.getElementById('acqResults').innerHTML='<div style="color:var(--text-dim);font-size:13px;margin-top:10px">Enter purchase price and rent to see analysis.</div>';return;}
+  const loan=price*(1-down/100),downAmt=price*(down/100);
+  const mo=rate/100/12,n=term*12;
+  const mpi=mo?loan*(mo*Math.pow(1+mo,n))/(Math.pow(1+mo,n)-1):loan/n;
+  const vacAmt=rent*(vac/100),mgmtAmt=rent*(mgmt/100),capexAmt=rent*(capex/100);
+  const egi=rent-vacAmt,totalExp=tax+ins+other+mgmtAmt+capexAmt,noi=egi-totalExp,cf=noi-mpi;
+  const capRate=price?noi*12/price*100:0,coc=downAmt?cf*12/downAmt*100:0,dscr=mpi?noi/mpi:null;
+  const grm=price&&rent?price/(rent*12):0;
+  const dc=dscr===null?'var(--text-dim)':dscr>=1.25?'var(--green)':dscr>=1.0?'var(--amber)':'var(--red)';
+  document.getElementById('acqResults').innerHTML=`<div class="acq-result">
+    <div style="font-size:10px;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px">Analysis Results</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+      <div>
+        <div class="field-row"><span class="field-label">Purchase Price</span><span class="field-value">${fmt$(price)}</span></div>
+        <div class="field-row"><span class="field-label">Down (${down}%)</span><span class="field-value">${fmt$(downAmt)}</span></div>
+        <div class="field-row"><span class="field-label">Loan Amount</span><span class="field-value">${fmt$(loan)}</span></div>
+        <div class="field-row"><span class="field-label">Monthly P&I</span><span class="field-value">${fmt$(mpi)}</span></div>
+      </div>
+      <div>
+        <div class="field-row"><span class="field-label">Gross Rent</span><span class="field-value green">${fmt$(rent)}/mo</span></div>
+        <div class="field-row"><span class="field-label">Total Expenses</span><span class="field-value red">${fmt$(totalExp)}/mo</span></div>
+        <div class="field-row"><span class="field-label">NOI</span><span class="field-value ${noi>=0?'green':'red'}">${fmt$(noi)}/mo</span></div>
+        <div class="field-row total"><span class="field-label bold">Cash Flow</span><span class="field-value ${cf>=0?'green':'red'} big">${fmt$(cf)}/mo</span></div>
+      </div>
+      <div>
+        <div class="field-row"><span class="field-label">Cap Rate</span><span class="field-value blue">${fmtPct(capRate)}</span></div>
+        <div class="field-row"><span class="field-label">Cash-on-Cash</span><span class="field-value purple">${fmtPct(coc)}</span></div>
+        <div class="field-row"><span class="field-label">GRM</span><span class="field-value">${grm.toFixed(1)}x</span></div>
+        <div class="field-row"><span class="field-label">DSCR</span><span class="field-value" style="color:${dc}">${dscr!==null?dscr.toFixed(2)+'x':'—'}</span></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:9px 12px;border-radius:6px;background:${cf>=0?'var(--green-dim)':'var(--red-dim)'};border:1px solid ${cf>=0?'var(--green)':'var(--red)'}">
+      <div style="font-size:12px;font-family:var(--font-mono);color:${cf>=0?'var(--green)':'var(--red)'}">
+        ${cf>=0?`✓ Cash flows +${fmt$(cf)}/mo · ${fmtPct(coc)} CoC · DSCR ${dscr!==null?dscr.toFixed(2)+'x':'—'}`:`✕ Negative cash flow at ${fmt$(cf)}/mo — does not cash flow at these inputs`}${dscr!==null&&dscr<1.25&&cf>=0?' · ⚠ DSCR below 1.25x lender minimum':''}
+      </div>
+    </div>
+  </div>`;
+}
+function addAcqToPortfolio(){
+  const addr=document.getElementById('acq-addr').value.trim()||'New Property';
+  const price=parseFloat(document.getElementById('acq-price').value)||0;
+  const down=parseFloat(document.getElementById('acq-down').value)||20;
+  const rate=parseFloat(document.getElementById('acq-rate').value)||0;
+  const term=parseInt(document.getElementById('acq-term').value)||30;
+  const rent=parseFloat(document.getElementById('acq-rent').value)||0;
+  const loan=price*(1-down/100);const mo=rate/100/12;const n=term*12;
+  const mpi=mo?loan*(mo*Math.pow(1+mo,n))/(Math.pow(1+mo,n)-1):loan/n;
+  const p={id:Date.now(),address:addr,type:'SFR',status:'vacant',tenant:'—',rent,leaseStart:'',leaseEnd:'',purchasePrice:price,estimatedValue:price,sqft:0,units:1,notes:'Added from Acquisition Analyzer.',
+    expenses:[{id:Date.now()+1,cat:'Mortgage (P&I)',desc:'Mortgage',amt:Math.round(mpi),freq:'monthly'},{id:Date.now()+2,cat:'Property Taxes',desc:'Property Taxes',amt:parseFloat(document.getElementById('acq-tax').value)||0,freq:'monthly'},{id:Date.now()+3,cat:'Insurance',desc:'Insurance',amt:parseFloat(document.getElementById('acq-ins').value)||0,freq:'monthly'}],
+    debt:Object.assign(mkDebt(),{loanType:'Conventional',originalBalance:Math.round(loan),currentBalance:Math.round(loan),rate,termYears:term,monthlyPayment:Math.round(mpi)}),
+    proforma:mkProforma(),contacts:[],maintenance:[]};
+  properties.push(p);save();closeAcqModal();updateAll();openProperty(p.id);showToast('Added to portfolio');
+}
+
+
+// ═══════════════════════════════════════════
+// RENT ROLL
+// ═══════════════════════════════════════════
+function renderRentRoll(){
+  const el=document.getElementById('rentRollContent');if(!el)return;
+  const cur=clients.find(c=>c.id===activeClientId);
+  const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const totalRent=properties.filter(p=>p.status==='occupied').reduce((s,p)=>s+(Number(p.rent)||0),0);
+  const totalUnits=properties.reduce((s,p)=>s+(Number(p.units)||1),0);
+  const rows=properties.map(p=>{
+    const days=daysUntil(p.leaseEnd);
+    const leaseFlag=days!==null&&days<90?`<span class="vacancy-tag">${days<0?'EXPIRED':days+'d'}</span>`:'';
+    const vacCost=p.status==='vacant'?`<span class="vacancy-tag">VACANT</span>`:'';
+    return`<tr>
+      <td style="font-size:13px;color:var(--text-hi);font-weight:500">${p.address.split(',')[0]}<br><span style="font-size:11px;color:var(--text-dim);font-weight:400">${p.address.split(',').slice(1).join(',').trim()}</span></td>
+      <td style="font-size:12px;color:var(--text-dim)">${p.type}</td>
+      <td style="font-size:12px">${p.units||1}</td>
+      <td style="font-size:13px">${p.tenant||'—'}${vacCost}</td>
+      <td class="mono">${p.rent?fmt$(p.rent):'<span style="color:var(--text-dim)">Vacant</span>'}</td>
+      <td class="mono" style="color:var(--text-dim)">${fmtDate(p.leaseStart)}</td>
+      <td class="mono" style="color:var(--text-dim)">${fmtDate(p.leaseEnd)}${leaseFlag}</td>
+      <td>${statusBadge(p.status)}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML=`<div class="rentroll-wrap">
+    <div class="rentroll-header">
+      <div>
+        <div style="font-weight:600;color:var(--text-hi);font-size:14px">${cur?.name||'Portfolio'} — Rent Roll</div>
+        <div style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono);margin-top:2px">As of ${today} · ${properties.length} properties · ${totalUnits} units</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:600;color:var(--green);font-family:var(--font-mono)">${fmt$(totalRent)}/mo</div>
+        <div style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono)">Gross Monthly Rent</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Property</th><th>Type</th><th>Units</th><th>Tenant</th><th>Rent/mo</th><th>Lease Start</th><th>Lease End</th><th>Status</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="4" style="font-family:var(--font-mono);font-size:12px;font-weight:600;padding:9px 12px;border-top:2px solid var(--border);background:var(--surface2)">TOTAL (${properties.length} properties · ${totalUnits} units)</td><td style="font-family:var(--font-mono);font-size:12px;font-weight:600;padding:9px 12px;border-top:2px solid var(--border);background:var(--surface2);color:var(--green)">${fmt$(totalRent)}/mo</td><td colspan="3" style="border-top:2px solid var(--border);background:var(--surface2)"></td></tr></tfoot>
+    </table></div>
+  </div>`;
+}
+function printRentRoll(){
+  const el=document.getElementById('rentRollContent');if(!el)return;
+  const cur=clients.find(c=>c.id===activeClientId);
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${cur?.name||'Portfolio'} Rent Roll</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;margin:24px}h1{font-size:16px;margin-bottom:4px}p{font-size:11px;color:#666;margin-bottom:16px}table{width:100%;border-collapse:collapse}th{background:#f1f1ef;padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #ccc}td{padding:7px 10px;border-bottom:1px solid #e5e5e3;font-size:12px}tfoot td{background:#f1f1ef;font-weight:700;border-top:2px solid #ccc}@media print{@page{margin:1.5cm}}</style>
+  </head><body>${el.innerHTML}</body></html>`);
+  w.document.close();w.focus();setTimeout(()=>w.print(),400);
+}
+
+// ═══════════════════════════════════════════
+// MONTHLY SNAPSHOTS
+// ═══════════════════════════════════════════
+function loadSnapshots(){try{return JSON.parse(localStorage.getItem('pt_snapshots_'+activeClientId)||'[]');}catch(e){return[];}}
+function saveSnapshots(s){localStorage.setItem('pt_snapshots_'+activeClientId,JSON.stringify(s));}
+
+function takeSnapshot(){
+  const snaps=loadSnapshots();
+  const mo=new Date().toISOString().slice(0,7);
+  if(snaps.find(s=>s.month===mo)){
+    if(!confirm(`A snapshot for ${mo} already exists. Overwrite it?`))return;
+    const idx=snaps.findIndex(s=>s.month===mo);snaps.splice(idx,1);
+  }
+  const grossRent=properties.reduce((s,p)=>s+(Number(p.rent)||0),0);
+  const totalExp=properties.reduce((s,p)=>s+totalMonthlyExpenses(p),0);
+  const totalNOI=grossRent-totalExp;
+  const totVal=properties.reduce((s,p)=>s+(Number(p.estimatedValue)||0),0);
+  const totDebt=properties.reduce((s,p)=>s+(Number(p.debt?.currentBalance)||0),0);
+  const totPurchase=properties.reduce((s,p)=>s+(Number(p.purchasePrice)||0),0);
+  const totalUnits=properties.reduce((s,p)=>s+(Number(p.units)||1),0);
+  const occupied=properties.filter(p=>p.status==='occupied').length;
+  const flagged=properties.filter(p=>{const d=calcDSCR(p);return d!==null&&d<1.25;}).length;
+  snaps.unshift({
+    month:mo,
+    takenAt:new Date().toISOString(),
+    properties:properties.length,
+    units:totalUnits,
+    occupancy:Math.round(occupied/properties.length*100)||0,
+    grossRent,totalExp,noi:totalNOI,
+    value:totVal,debt:totDebt,equity:totVal-totDebt,
+    purchase:totPurchase,appreciation:totVal-totPurchase,
+    dscrFlags:flagged
+  });
+  saveSnapshots(snaps);
+  renderSnapshots();
+  showToast(`Snapshot saved for ${mo}`);
+}
+
+function renderSnapshots(){
+  const el=document.getElementById('snapshotList');if(!el)return;
+  const snaps=loadSnapshots();
+  if(!snaps.length){el.innerHTML='<div style="color:var(--text-dim);font-size:13px;padding:20px 0">No snapshots yet. Take a snapshot each month to track trends over time.</div>';return;}
+  // Trend arrows
+  const arrow=(cur,prev,higherIsBetter=true)=>{
+    if(prev===undefined)return'';
+    const better=higherIsBetter?(cur>prev):(cur<prev);
+    const same=cur===prev;
+    if(same)return'<span style="color:var(--text-dim)"> →</span>';
+    return better?'<span style="color:var(--green)"> ↑</span>':'<span style="color:var(--red)"> ↓</span>';
+  };
+  el.innerHTML=snaps.map((s,i)=>{
+    const prev=snaps[i+1];
+    const gainPct=s.purchase?(s.appreciation/s.purchase*100):0;
+    return`<div class="snapshot-card">
+      <div class="snapshot-header">
+        <div><div class="snapshot-date">${s.month}</div><div class="snapshot-meta">${s.properties} properties · ${s.units} units · ${s.occupancy}% occupied${s.dscrFlags>0?` · <span style="color:var(--amber)">${s.dscrFlags} DSCR flag${s.dscrFlags>1?'s':''}</span>`:''}</div></div>
+        <button class="btn btn-sm btn-danger" onclick="deleteSnapshot('${s.month}')">Delete</button>
+      </div>
+      <div class="snapshot-grid">
+        <div class="snapshot-stat"><div class="snapshot-stat-label">Gross Rent/mo</div><div class="snapshot-stat-val" style="color:var(--green)">${fmt$(s.grossRent)}${arrow(s.grossRent,prev?.grossRent)}</div></div>
+        <div class="snapshot-stat"><div class="snapshot-stat-label">NOI/mo</div><div class="snapshot-stat-val" style="color:${s.noi>=0?'var(--green)':'var(--red)'}">${fmt$(s.noi)}${arrow(s.noi,prev?.noi)}</div></div>
+        <div class="snapshot-stat"><div class="snapshot-stat-label">Portfolio Value</div><div class="snapshot-stat-val" style="color:var(--blue)">${fmt$(s.value)}${arrow(s.value,prev?.value)}</div></div>
+        <div class="snapshot-stat"><div class="snapshot-stat-label">Total Equity</div><div class="snapshot-stat-val" style="color:var(--green)">${fmt$(s.equity)}${arrow(s.equity,prev?.equity)}</div></div>
+        <div class="snapshot-stat"><div class="snapshot-stat-label">Total Debt</div><div class="snapshot-stat-val" style="color:var(--red)">${fmt$(s.debt)}${arrow(s.debt,prev?.debt,false)}</div></div>
+        <div class="snapshot-stat"><div class="snapshot-stat-label">Appreciation</div><div class="snapshot-stat-val" style="color:${s.appreciation>=0?'var(--green)':'var(--red)'}">${fmt$(s.appreciation)} <span style="font-size:11px">(${gainPct.toFixed(1)}%)</span></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function deleteSnapshot(month){
+  const snaps=loadSnapshots().filter(s=>s.month!==month);
+  saveSnapshots(snaps);renderSnapshots();showToast('Snapshot deleted');
+}
+
+// ═══════════════════════════════════════════
+// GOALS
+// ═══════════════════════════════════════════
+function loadGoals(){try{return JSON.parse(localStorage.getItem('pt_goals_'+activeClientId)||'[]');}catch(e){return[];}}
+function saveGoals(g){localStorage.setItem('pt_goals_'+activeClientId,JSON.stringify(g));}
+function loadStrategyNotes(){return localStorage.getItem('pt_strategy_'+activeClientId)||'';}
+function saveStrategyNotesStore(n){localStorage.setItem('pt_strategy_'+activeClientId,n);}
+
+function getCurrentValue(type){
+  const grossRent=properties.reduce((s,p)=>s+(Number(p.rent)||0),0);
+  const totalExp=properties.reduce((s,p)=>s+totalMonthlyExpenses(p),0);
+  const totVal=properties.reduce((s,p)=>s+(Number(p.estimatedValue)||0),0);
+  const totDebt=properties.reduce((s,p)=>s+(Number(p.debt?.currentBalance)||0),0);
+  const totalUnits=properties.reduce((s,p)=>s+(Number(p.units)||1),0);
+  const map={
+    properties:properties.length,
+    noi:(grossRent-totalExp),
+    equity:(totVal-totDebt),
+    units:totalUnits,
+    cashflow:(grossRent-totalExp)*12,
+  };
+  return map[type]!==undefined?map[type]:null;
+}
+
+function openGoalModal(){document.getElementById('goalModal').classList.add('open');}
+function closeGoalModal(){document.getElementById('goalModal').classList.remove('open');}
+function saveGoal(){
+  const label=document.getElementById('goal-label').value.trim();
+  if(!label){alert('Enter a goal label.');return;}
+  const goals=loadGoals();
+  goals.push({id:'g'+Date.now(),type:document.getElementById('goal-type').value,label,target:parseFloat(document.getElementById('goal-target').value)||0,date:document.getElementById('goal-date').value,notes:document.getElementById('goal-notes').value.trim(),createdAt:new Date().toISOString()});
+  saveGoals(goals);closeGoalModal();renderGoals();showToast('Goal added');
+  ['goal-label','goal-target','goal-date','goal-notes'].forEach(i=>document.getElementById(i).value='');
+}
+function deleteGoal(id){const goals=loadGoals().filter(g=>g.id!==id);saveGoals(goals);renderGoals();}
+
+function renderGoals(){
+  const el=document.getElementById('goalList');if(!el)return;
+  const goals=loadGoals();
+  const notesEl=document.getElementById('clientStrategyNotes');
+  if(notesEl)notesEl.value=loadStrategyNotes();
+  if(!goals.length){el.innerHTML='<div style="color:var(--text-dim);font-size:13px;padding:16px 0;margin-bottom:4px">No goals set yet. Add targets to track progress.</div>';return;}
+  el.innerHTML=goals.map(g=>{
+    const cur=getCurrentValue(g.type);
+    const pct=cur!==null&&g.target?Math.min(100,Math.round(cur/g.target*100)):null;
+    const daysLeft=g.date?daysUntil(g.date):null;
+    const labels={properties:'properties',noi:'NOI/mo',equity:'equity',units:'units',cashflow:'annual cash flow',custom:''};
+    const curFmt=cur!==null?(g.type==='properties'||g.type==='units'?cur:fmt$(cur)):null;
+    const tgtFmt=g.type==='properties'||g.type==='units'?g.target:fmt$(g.target);
+    return`<div class="goal-card">
+      <div class="goal-header">
+        <div>
+          <div class="goal-label">${g.label}</div>
+          <div class="goal-meta">${curFmt!==null?`Current: ${curFmt} / Target: ${tgtFmt}`:`Target: ${tgtFmt}`} ${g.date?`· Due ${fmtDate(g.date)}`:''}${daysLeft!==null&&daysLeft<30?` <span style="color:${daysLeft<0?'var(--red)':'var(--amber)'}">· ${daysLeft<0?'Overdue '+Math.abs(daysLeft)+'d':daysLeft+'d left'}</span>`:''}</div>
+          ${g.notes?`<div style="font-size:12px;color:var(--text-dim);margin-top:3px;font-style:italic">${g.notes}</div>`:''}
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteGoal('${g.id}')">✕</button>
+      </div>
+      ${pct!==null?`<div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':pct>=60?'var(--amber)':'var(--blue)'}"></div></div><div class="goal-meta">${pct}% complete</div>`:''}
+    </div>`;
+  }).join('');
+}
+function saveStrategyNotes(){
+  const el=document.getElementById('clientStrategyNotes');
+  if(el){saveStrategyNotesStore(el.value);showToast('Notes saved');}
+}
+
+// ═══════════════════════════════════════════
+// REFINANCE ANALYZER
+// ═══════════════════════════════════════════
+let _refiPropId=null;
+function openRefiModal(id){
+  const p=properties.find(x=>x.id===id);if(!p)return;
+  _refiPropId=id;
+  const d=p.debt||mkDebt();
+  document.getElementById('refiPropName').textContent=p.address;
+  const ai=Number(d.currentBalance)*Number(d.rate)/100/12;
+  const mprin=Math.max(0,(Number(d.monthlyPayment)||0)-ai);
+  document.getElementById('refiCurrentSummary').innerHTML=`
+    <div class="field-row"><span class="field-label">Lender</span><span class="field-value">${d.lender||'—'}</span></div>
+    <div class="field-row"><span class="field-label">Balance</span><span class="field-value red">${fmt$(d.currentBalance)}</span></div>
+    <div class="field-row"><span class="field-label">Rate</span><span class="field-value">${d.rate?fmtPct(d.rate):'—'}</span></div>
+    <div class="field-row"><span class="field-label">Payment</span><span class="field-value">${fmt$(d.monthlyPayment)}/mo</span></div>
+    <div class="field-row"><span class="field-label">Principal/mo</span><span class="field-value green">${fmt$(mprin)}</span></div>`;
+  document.getElementById('refi-loan').placeholder=d.currentBalance||'same as current';
+  document.getElementById('refi-rate').value='';
+  document.getElementById('refi-term').value=d.termYears||30;
+  document.getElementById('refi-cashout').value='0';
+  document.getElementById('refi-costs').value='3000';
+  document.getElementById('refiResults').innerHTML='';
+  document.getElementById('refiModal').classList.add('open');
+}
+function closeRefiModal(){document.getElementById('refiModal').classList.remove('open');}
+function calcRefi(){
+  const p=properties.find(x=>x.id===_refiPropId);if(!p)return;
+  const d=p.debt||mkDebt();
+  const newRate=parseFloat(document.getElementById('refi-rate').value)||0;
+  const newTerm=parseInt(document.getElementById('refi-term').value)||30;
+  const cashOut=parseFloat(document.getElementById('refi-cashout').value)||0;
+  const costs=parseFloat(document.getElementById('refi-costs').value)||0;
+  const newLoan=parseFloat(document.getElementById('refi-loan').value)||Number(d.currentBalance)||0;
+  const totalNewLoan=newLoan+cashOut;
+  if(!newRate||!totalNewLoan){document.getElementById('refiResults').innerHTML='<div style="color:var(--text-dim);font-size:13px;margin-top:10px">Enter new rate to see comparison.</div>';return;}
+  const oldPmt=Number(d.monthlyPayment)||0;
+  const mo=newRate/100/12;const n=newTerm*12;
+  const newPmt=mo?totalNewLoan*(mo*Math.pow(1+mo,n))/(Math.pow(1+mo,n)-1):totalNewLoan/n;
+  const savings=oldPmt-newPmt;
+  const breakeven=savings>0?Math.ceil(costs/savings):null;
+  const oldNOI=monthlyNOI(p);
+  const newNOI=oldNOI+savings;
+  const oldDSCR=oldPmt?oldNOI/oldPmt:null;const newDSCR=newPmt?newNOI/newPmt:null;
+  const oldAnnInt=Number(d.currentBalance)*Number(d.rate)/100;
+  const newAnnInt=totalNewLoan*newRate/100;
+  document.getElementById('refiResults').innerHTML=`
+  <div class="refi-comparison">
+    <div class="refi-col">
+      <div class="refi-col-title">Current Loan</div>
+      <div class="field-row"><span class="field-label">Monthly P&I</span><span class="field-value">${fmt$(oldPmt)}</span></div>
+      <div class="field-row"><span class="field-label">Annual Interest</span><span class="field-value red">${fmt$(oldAnnInt)}</span></div>
+      <div class="field-row"><span class="field-label">NOI/mo</span><span class="field-value ${oldNOI>=0?'green':'red'}">${fmt$(oldNOI)}</span></div>
+      <div class="field-row"><span class="field-label">DSCR</span><span class="field-value ${oldDSCR!==null&&oldDSCR>=1.25?'green':oldDSCR!==null&&oldDSCR>=1.0?'amber':'red'}">${oldDSCR!==null?oldDSCR.toFixed(2)+'x':'—'}</span></div>
+    </div>
+    <div class="refi-col">
+      <div class="refi-col-title">After Refi</div>
+      <div class="field-row"><span class="field-label">Monthly P&I</span><span class="field-value ${savings>0?'green':'red'}">${fmt$(newPmt)} ${savings>0?'<span style="font-size:10px">(-'+fmt$(savings)+')</span>':'<span style="font-size:10px">(+'+fmt$(Math.abs(savings))+')</span>'}</span></div>
+      <div class="field-row"><span class="field-label">Annual Interest</span><span class="field-value red">${fmt$(newAnnInt)}</span></div>
+      <div class="field-row"><span class="field-label">NOI/mo</span><span class="field-value ${newNOI>=0?'green':'red'}">${fmt$(newNOI)}</span></div>
+      <div class="field-row"><span class="field-label">DSCR</span><span class="field-value ${newDSCR!==null&&newDSCR>=1.25?'green':newDSCR!==null&&newDSCR>=1.0?'amber':'red'}">${newDSCR!==null?newDSCR.toFixed(2)+'x':'—'}</span></div>
+    </div>
+  </div>
+  <div style="margin-top:12px;padding:10px 12px;border-radius:6px;background:${savings>0?'var(--green-dim)':'var(--red-dim)'};border:1px solid ${savings>0?'var(--green)':'var(--red)'}">
+    <div style="font-size:12px;font-family:var(--font-mono);color:${savings>0?'var(--green)':'var(--red)'}">
+      ${savings>0?`✓ Saves ${fmt$(savings)}/mo · ${fmt$(savings*12)}/yr · Breakeven on costs in ${breakeven} months`:`✕ Payment increases ${fmt$(Math.abs(savings))}/mo — may not be worth refinancing`}
+      ${cashOut>0?` · Cash out: ${fmt$(cashOut)}`:''}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// VACANCY COST TRACKER (inline in property)
+// ═══════════════════════════════════════════
+function vacancyCostSince(p){
+  if(p.status!=='vacant')return null;
+  // Find last maintenance or status note — use a rough estimate from leaseEnd
+  const leaseEnd=p.leaseEnd?new Date(p.leaseEnd):null;
+  if(!leaseEnd)return null;
+  const days=Math.max(0,Math.floor((new Date()-leaseEnd)/86400000));
+  const monthsVacant=days/30;
+  const carryingCost=totalMonthlyExpenses(p);
+  return{days,monthsVacant,totalCost:carryingCost*monthsVacant,perMonth:carryingCost};
+}
+
+// ═══════════════════════════════════════════
+// MONTHLY REPORT (PDF via print)
+// ═══════════════════════════════════════════
+function openReportModal(){
+  const mo=new Date().toISOString().slice(0,7);
+  document.getElementById('rpt-month').value=mo;
+  document.getElementById('reportModal').classList.add('open');
+}
+function closeReportModal(){document.getElementById('reportModal').classList.remove('open');}
+function generateReport(){
+  const cur=clients.find(c=>c.id===activeClientId);
+  const month=document.getElementById('rpt-month').value||new Date().toISOString().slice(0,7);
+  const consultant=document.getElementById('rpt-consultant').value.trim()||'Portfolio Consultant';
+  const coverNote=document.getElementById('rpt-covernote').value.trim();
+  const incSummary=document.getElementById('rpt-summary').checked;
+  const incDSCR=document.getElementById('rpt-dscr').checked;
+  const incRentRoll=document.getElementById('rpt-rentroll').checked;
+  const incAppreciation=document.getElementById('rpt-appreciation').checked;
+  const incNotes=document.getElementById('rpt-notes').checked;
+
+  const grossRent=properties.reduce((s,p)=>s+(Number(p.rent)||0),0);
+  const totalExp=properties.reduce((s,p)=>s+totalMonthlyExpenses(p),0);
+  const noi=grossRent-totalExp;
+  const totVal=properties.reduce((s,p)=>s+(Number(p.estimatedValue)||0),0);
+  const totDebt=properties.reduce((s,p)=>s+(Number(p.debt?.currentBalance)||0),0);
+  const totPurchase=properties.reduce((s,p)=>s+(Number(p.purchasePrice)||0),0);
+  const totEquity=totVal-totDebt;
+  const totGain=totVal-totPurchase;
+  const occupied=properties.filter(p=>p.status==='occupied').length;
+  const occupancy=properties.length?Math.round(occupied/properties.length*100):0;
+  const dscrFlagged=properties.filter(p=>{const d=calcDSCR(p);return d!==null&&d<1.25;});
+
+  let body=`<div class="report-header">
+    <div><div class="report-title">${cur?.name||'Portfolio'} — Monthly Report</div><div class="report-subtitle">${month} · Prepared by ${consultant}</div></div>
+    <div style="text-align:right;font-size:11px;color:#666">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+  </div>`;
+
+  if(coverNote){body+=`<div class="section"><p style="font-size:13px;line-height:1.7;color:#333;border-left:3px solid #d97706;padding-left:12px;margin:0">${coverNote}</p></div>`;}
+
+  if(incSummary){body+=`<div class="section"><div class="section-title">Portfolio Summary</div>
+    <div class="summary-grid">
+      <div class="summary-stat"><div class="sl">Properties</div><div class="sv">${properties.length}</div><div class="sm">${occupancy}% occupied</div></div>
+      <div class="summary-stat"><div class="sl">Gross Rent/mo</div><div class="sv green">${fmt$(grossRent)}</div><div class="sm">${fmt$(grossRent*12)}/yr</div></div>
+      <div class="summary-stat"><div class="sl">Total Expenses/mo</div><div class="sv red">${fmt$(totalExp)}</div></div>
+      <div class="summary-stat"><div class="sl">NOI/mo</div><div class="sv ${noi>=0?'green':'red'}">${fmt$(noi)}</div><div class="sm">${fmt$(noi*12)}/yr</div></div>
+      <div class="summary-stat"><div class="sl">Portfolio Value</div><div class="sv blue">${fmt$(totVal)}</div></div>
+      <div class="summary-stat"><div class="sl">Total Equity</div><div class="sv green">${fmt$(totEquity)}</div></div>
+    </div></div>`;
+  }
+
+  if(incDSCR){
+    body+=`<div class="section"><div class="section-title">DSCR Analysis</div>`;
+    if(!dscrFlagged.length){body+=`<p style="color:#16a34a;font-size:13px">✓ All properties meeting DSCR threshold (≥ 1.25x)</p>`;}
+    else{
+      body+=`<p style="color:#dc2626;font-size:12px;margin-bottom:8px">⚠ ${dscrFlagged.length} propert${dscrFlagged.length===1?'y':'ies'} below 1.25x DSCR threshold</p>`;
+      body+=`<table><thead><tr><th>Property</th><th>NOI/yr</th><th>Debt Service/yr</th><th>DSCR</th><th>Shortfall</th></tr></thead><tbody>`;
+      dscrFlagged.forEach(p=>{
+        const d=calcDSCR(p),annNOI=monthlyNOI(p)*12,annDS=(Number(p.debt?.monthlyPayment)||0)*12;
+        body+=`<tr><td>${p.address.split(',')[0]}</td><td>${fmt$(annNOI)}</td><td>${fmt$(annDS)}</td><td style="color:${d<1.0?'#dc2626':'#d97706'};font-weight:600">${d!==null?d.toFixed(2)+'x':'—'}</td><td style="color:#dc2626">${fmt$(annNOI-annDS)}</td></tr>`;
+      });
+      body+=`</tbody></table>`;
+    }
+    body+=`</div>`;
+  }
+
+  if(incRentRoll){
+    body+=`<div class="section"><div class="section-title">Rent Roll</div><table><thead><tr><th>Property</th><th>Type</th><th>Tenant</th><th>Rent/mo</th><th>Lease End</th><th>Status</th></tr></thead><tbody>`;
+    properties.forEach(p=>{body+=`<tr><td>${p.address.split(',')[0]}</td><td>${p.type}</td><td>${p.tenant||'—'}</td><td>${p.rent?fmt$(p.rent):'Vacant'}</td><td>${fmtDate(p.leaseEnd)}</td><td>${p.status}</td></tr>`;});
+    body+=`<tr style="font-weight:700;background:#f1f1ef"><td colspan="3">TOTAL</td><td>${fmt$(grossRent)}/mo</td><td colspan="2"></td></tr></tbody></table></div>`;
+  }
+
+  if(incAppreciation){
+    body+=`<div class="section"><div class="section-title">Appreciation Summary</div>`;
+    body+=`<table><thead><tr><th>Property</th><th>Purchase</th><th>Est. Value</th><th>Gain $</th><th>Gain %</th></tr></thead><tbody>`;
+    properties.forEach(p=>{const a=calcAppreciation(p);body+=`<tr><td>${p.address.split(',')[0]}</td><td>${p.purchasePrice?fmt$(p.purchasePrice):'—'}</td><td>${p.estimatedValue?fmt$(p.estimatedValue):'—'}</td><td style="${a&&a.gain>=0?'color:#16a34a':'color:#dc2626'}">${a?fmt$(a.gain):'—'}</td><td style="${a&&a.pct>=0?'color:#16a34a':'color:#dc2626'}">${a?a.pct.toFixed(1)+'%':'—'}</td></tr>`;});
+    body+=`<tr style="font-weight:700;background:#f1f1ef"><td colspan="2">TOTAL</td><td>${fmt$(totVal)}</td><td style="color:#16a34a">${totPurchase?fmt$(totGain):'—'}</td><td style="color:#16a34a">${totPurchase?(totGain/totPurchase*100).toFixed(1)+'%':'—'}</td></tr></tbody></table></div>`;
+  }
+
+  if(incNotes){
+    const notes=loadStrategyNotes();
+    if(notes){body+=`<div class="section"><div class="section-title">Consultant Notes & Recommendations</div><p style="font-size:13px;line-height:1.7;color:#333;white-space:pre-wrap">${notes}</p></div>`;}
+  }
+
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${cur?.name||'Portfolio'} Monthly Report — ${month}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;font-size:12px;color:#111;max-width:900px;margin:0 auto;padding:24px}
+    .report-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #d97706;padding-bottom:14px;margin-bottom:20px}
+    .report-title{font-size:20px;font-weight:700;color:#111}
+    .report-subtitle{font-size:12px;color:#666;margin-top:3px}
+    .section{margin-bottom:22px}
+    .section-title{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#666;font-weight:700;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #e5e5e3}
+    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .summary-stat{background:#f7f7f5;border:1px solid #e5e5e3;border-radius:6px;padding:10px 12px}
+    .sl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:3px}
+    .sv{font-size:17px;font-weight:700;color:#111}
+    .sv.green{color:#16a34a}.sv.red{color:#dc2626}.sv.blue{color:#2563eb}
+    .sm{font-size:10px;color:#999;margin-top:2px}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+    th{background:#f1f1ef;padding:6px 9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #ccc;white-space:nowrap}
+    td{padding:6px 9px;border-bottom:1px solid #e5e5e3}
+    tr:hover td{background:#fafaf9}
+    @media print{@page{margin:1.5cm;size:letter}body{padding:0;max-width:100%}.section{break-inside:avoid}}
+  </style></head><body>${body}</body></html>`);
+  w.document.close();w.focus();
+  setTimeout(()=>{w.print();closeReportModal();},500);
+}
+
+// Switch client also reloads goals/snapshots
+
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────
+let activeSubtab={};
+loadClientActivity();
+function updateAll(){renderClientSelect();updateHealthBar();updateStats();updateTable();}
+updateAll();
+</script>
+</body>
+</html>
